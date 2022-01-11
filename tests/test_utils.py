@@ -94,7 +94,7 @@ def test_bytes_to_datetime():
 
 def test_datetime_to_bytes():
 
-    timestamp = datetime.fromisoformat("2006-05-30T12:33:10")
+    timestamp = datetime(2006, 5, 30, 12, 33, 10)
     data = utils.datetime_to_bytes(timestamp)
     assert data.hex() == "103312300506"
 
