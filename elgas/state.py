@@ -1,4 +1,9 @@
-from attrs import define, field, validators
+import attr
+import structlog
+
+from elgas import application, exceptions
+
+LOG = structlog.get_logger("state")
 
 
 class _SentinelBase(type):
@@ -25,9 +30,38 @@ def make_sentinel(name):
     return cls
 
 
-NOT_CONNECTED = make_sentinel("NOT_CONNECTED")
+IDLE = make_sentinel("IDLE")
+AWAITING_READ_ACTUAL_VALUES_RESPONSE = make_sentinel(
+    "AWAITING_READ_ACTUAL_VALUES_RESPONSE"
+)
+
+NEED_DATA = make_sentinel("NEED_DATA")
 
 
-@define
+ELGAS_STATE_TRANSITIONS = {
+    IDLE: {application.ReadActualValuesRequest: AWAITING_READ_ACTUAL_VALUES_RESPONSE},
+    AWAITING_READ_ACTUAL_VALUES_RESPONSE: {application.ReadActualValuesResponse: IDLE},
+}
+
+
+@attr.s(auto_attribs=True)
 class ElgasState:
-    ...
+    """
+    Handles state changes in ELGAS Protocol
+    """
+
+    current_state: _SentinelBase = attr.ib(default=IDLE)
+
+    def process_event(self, event):
+
+        event_type = type(event)
+
+        try:
+            new_state = ELGAS_STATE_TRANSITIONS[self.current_state][event_type]
+        except KeyError:
+            raise exceptions.LocalElgasProtocolError(
+                f"Can't handle {event_type} when state={self.current_state}"
+            )
+        old_state = self.current_state
+        self.current_state = new_state
+        LOG.debug(f"Elgas state transitioned from {old_state} to {new_state}")

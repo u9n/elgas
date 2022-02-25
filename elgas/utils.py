@@ -1,5 +1,6 @@
 import random
 from datetime import datetime
+from typing import *
 
 
 def calculate_lrc(data: bytearray) -> int:
@@ -83,7 +84,7 @@ def pad_password(password: str):
     return password + "".join(four_random)
 
 
-def bytes_to_datetime(data: bytes) -> datetime:
+def bytes_to_datetime(data: bytes) -> Tuple[datetime, bool, bool]:
     """
     BCD of 6 bytes  seconds, minutes, hour, day, month, year
     10 33 12 30 05 06 == 2006-05-30T12:33:10
@@ -92,15 +93,23 @@ def bytes_to_datetime(data: bytes) -> datetime:
         raise ValueError(f"{data!r} is not a BCD encoded datetime")
     second = from_bcd(data[0:1])
     minute = from_bcd(data[1:2])
-    hour = from_bcd(data[2:3])
+    hour_data = data[2]
+    hour_byte = (hour_data & 0b00111111).to_bytes(1, "little")
+    hour = from_bcd(hour_byte)
+    is_dst = bool(hour_data & 0b100000000)
+    supports_dst = bool(hour_data & 0b01000000)
     day = from_bcd(data[3:4])
     month = from_bcd(data[4:5])
     # The year is only the last 2 digits. We set it so all dates are in the 20xx
     # I will probably be retired when it becomes a problem :)
     year = from_bcd(data[5:]) + 2000
 
-    return datetime(
-        year=year, month=month, day=day, hour=hour, minute=minute, second=second
+    return (
+        datetime(
+            year=year, month=month, day=day, hour=hour, minute=minute, second=second
+        ),
+        is_dst,
+        supports_dst,
     )
 
 

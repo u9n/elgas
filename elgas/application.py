@@ -2,9 +2,9 @@ import datetime
 from enum import IntEnum
 from typing import *
 
-from attrs import define, field
+import attr
 
-from elgas.frames import ServiceNumber
+from elgas import constants, utils
 
 
 class Archive(IntEnum):
@@ -21,25 +21,34 @@ class Archive(IntEnum):
     GAS_COMPOSITION = 10
 
 
-@define
+@attr.s(auto_attribs=True)
 class ReadActualValuesRequest:
     """
     Will request a readout of all current parameters in the device
     """
 
+    service: ClassVar[constants.ServiceNumber] = constants.ServiceNumber.READ_VALUES
     password: str
 
+    def to_bytes(self) -> bytes:
+        return utils.pad_password(self.password).encode("latin-1")
 
-@define
+
+@attr.s(auto_attribs=True)
 class ReadActualValuesResponse:
     """
     A long datastructure of parameters that depends on the firmware of the device
     """
 
-    ...
+    service: ClassVar[constants.ServiceNumber] = constants.ServiceNumber.READ_VALUES
+    data: bytes
+
+    @classmethod
+    def from_bytes(cls, in_bytes: bytes):
+        return cls(data=in_bytes)
 
 
-@define
+@attr.s(auto_attribs=True)
 class ReadActualValuesResponseV1:
     """
     For firmware versions < 1.18
@@ -48,7 +57,7 @@ class ReadActualValuesResponseV1:
     ...
 
 
-@define
+@attr.s(auto_attribs=True)
 class ReadActualValuesResponseV2:
     """
     For firmware versions  1.18 < fwv < 1.99
@@ -57,7 +66,7 @@ class ReadActualValuesResponseV2:
     ...
 
 
-@define
+@attr.s(auto_attribs=True)
 class ReadActualValuesResponseV3:
     """
     For firmware versions > 2.00 and Elcor gen 4
@@ -66,20 +75,144 @@ class ReadActualValuesResponseV3:
     ...
 
 
-@define
+@attr.s(auto_attribs=True)
 class ReadTimeRequest:
     """
     Request for the device's time. It contains no data.
     """
 
-    SERVICE_GROUP: ClassVar[ServiceNumber] = ServiceNumber.READ_DEVICE_TIME
+    service: ClassVar[
+        constants.ServiceNumber
+    ] = constants.ServiceNumber.READ_DEVICE_TIME
+
+    def to_bytes(self) -> bytes:
+        return b""
 
 
-@define
+@attr.s(auto_attribs=True)
 class ReadTimeResponse:
     """
-    Contains the device time
+    Contains the device time. Some firmware adds internal data at the end of the
+    message.
     """
+
+    service: ClassVar[
+        constants.ServiceNumber
+    ] = constants.ServiceNumber.READ_DEVICE_TIME
 
     time: datetime
     data_access_result: bytes
+    is_dst: bool
+    device_supports_dst: bool
+    extra_data: bytes
+
+    @classmethod
+    def from_bytes(cls, in_bytes: bytes):
+        time_data = in_bytes[:6]
+        data_access_result = in_bytes[6:7]
+        extra_data = in_bytes[7:-2]
+        # crc = in_bytes[-2:]
+        # TODO: Check CRC
+        device_time, is_dst, supports_dst = utils.bytes_to_datetime(time_data)
+        return cls(
+            time=device_time,
+            data_access_result=data_access_result,
+            is_dst=is_dst,
+            device_supports_dst=supports_dst,
+            extra_data=extra_data,
+        )
+
+
+@attr.s(auto_attribs=True)
+class ReadDeviceParametersRequest:
+    """"""
+
+    service: ClassVar[
+        constants.ServiceNumber
+    ] = constants.ServiceNumber.READ_SCADA_PARAMETERS
+
+    password: str  # todo: set max lenght
+    object_count: int  # todo: set max and min
+    buffer_length: int  # todo: set max and min
+
+    def to_bytes(self) -> bytes:
+        out = bytearray()
+        out.extend(utils.pad_password(self.password).encode("latin-1"))
+        out.extend(self.object_count.to_bytes(2, "little"))
+        out.extend(self.buffer_length.to_bytes(2, "little"))
+
+        return bytes(out)
+
+
+@attr.s(auto_attribs=True)
+class ReadDeviceParametersResponse:
+    """"""
+
+    service: ClassVar[
+        constants.ServiceNumber
+    ] = constants.ServiceNumber.READ_SCADA_PARAMETERS
+
+    data: bytes
+    object_number: int
+    object_amount: int
+    is_end: int  # TODO: Should this be a separate class to use in state handling?
+
+    @classmethod
+    def from_bytes(cls, in_bytes: bytes):
+        object_number = int.from_bytes(in_bytes[:2], "little")
+        object_amount = int.from_bytes(in_bytes[2:4], "little")
+        is_end = bool(in_bytes[4])
+        data = in_bytes[5:]
+        return cls(
+            object_number=object_number,
+            object_amount=object_amount,
+            is_end=is_end,
+            data=data,
+        )
+
+
+@attr.s(auto_attribs=True)
+class ReadArchiveByTimeRequest:
+    """"""
+
+    service: ClassVar[
+        constants.ServiceNumber
+    ] = constants.ServiceNumber.READ_ARCHIVES_BY_DATE
+
+    password: str  # todo: set max lenght
+    archive: constants.Archive
+    amount: int
+    last_date: datetime
+
+    def to_bytes(self) -> bytes:
+        out = bytearray()
+        out.extend(utils.pad_password(self.password).encode("latin-1"))
+        out.append(self.archive)
+        out.extend(self.amount.to_bytes(2, "little"))
+        out.extend(utils.datetime_to_bytes(self.last_date))
+
+        return bytes(out)
+
+
+@attr.s(auto_attribs=True)
+class ReadArchiveByTimeResponse:
+    """"""
+
+    service: ClassVar[
+        constants.ServiceNumber
+    ] = constants.ServiceNumber.READ_ARCHIVES_BY_DATE
+
+    archive: constants.Archive
+    first_record_id: int
+    data: bytes
+
+    @classmethod
+    def from_bytes(cls, in_bytes: bytes):
+        archive = constants.Archive(in_bytes[0])
+        first_record_id = int.from_bytes(in_bytes[1:2], "little")
+        data = in_bytes[3:]
+        return cls(
+            archive=archive,
+            first_record_id=first_record_id,
+            data=data,
+        )

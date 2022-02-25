@@ -4,32 +4,15 @@ from enum import IntEnum
 from functools import lru_cache
 from typing import *
 
-from attrs import define, field
+import attr
 
-from elgas import utils
-
-
-class ServiceNumber(IntEnum):
-    READ_VALUES = 0x64
-    WRITE_VALUES = 0x65
-    SEARCH_ARCHIVE_POINTERS_OLD = 0x67
-    SEARCH_ARCHIVE_POINTERS = 0x7B
-    READ_ARCHIVES_OLD = 0x68
-    READ_ARCHIVES = 0x7C
-    READ_DEVICE_TIME = 0x6C
-    READ_SCADA_PARAMETERS = 0x70
-    WRITE_DEVICE_TIME = 0x71
-    GROUP_WRITE_VALUES = 0x77
-    GROUP_READ_VALUES = 0x79
-    CALL = 0x87
-    READ_ARCHIVES_BY_DATE_OLD = 0x91
-    READ_ARCHIVES_BY_DATE = 0x7D
+from elgas import constants, utils
 
 
-@define(auto_attribs=True)
+@attr.s(auto_attribs=True)
 class Request:
     TYPE: ClassVar[int] = 0x84
-    service: ServiceNumber
+    service: constants.ServiceNumber
     destination_address_1: int
     destination_address_2: int
     source_address_1: int
@@ -51,7 +34,7 @@ class Request:
         out.append(0xFE)
         out.append(self.TYPE)
         out.append(self.service)
-        out.extend(self.length.to_bytes(2, "big"))
+        out.extend(self.length.to_bytes(2, "little"))
         out.extend(self.destination_address_1.to_bytes(2, "big"))
         out.append(self.destination_address_2)
         out.extend(self.source_address_1.to_bytes(2, "big"))
@@ -66,10 +49,10 @@ class Request:
         return bytes(out)
 
 
-@define
+@attr.s(auto_attribs=True)
 class Response:
     TYPE: ClassVar[int] = 0x86
-    service: ServiceNumber
+    service: constants.ServiceNumber
     destination_address_1: int
     destination_address_2: int
     source_address_1: int
@@ -89,10 +72,10 @@ class Response:
         out.append(0xFE)
         out.append(self.TYPE)
         out.append(self.service)
-        out.extend(self.length.to_bytes(2, "big"))
-        out.extend(self.destination_address_1.to_bytes(2, "big"))
+        out.extend(self.length.to_bytes(2, "little"))
+        out.extend(self.destination_address_1.to_bytes(2, "little"))
         out.append(self.destination_address_2)
-        out.extend(self.source_address_1.to_bytes(2, "big"))
+        out.extend(self.source_address_1.to_bytes(2, "little"))
         out.append(self.source_address_2)
         out.extend(self.data)
         redundancy_source = out[1:]
@@ -103,11 +86,55 @@ class Response:
 
         return bytes(out)
 
+    @classmethod
+    def from_bytes(cls, in_bytes: bytes):
+        if not in_bytes.startswith(b"\x02\xfe\x86"):
+            raise ValueError("Not a Response frame")
+        if not in_bytes.endswith(b"\x0d"):
+            raise ValueError("Data does not end with end char")
+        service = constants.ServiceNumber(int.from_bytes(in_bytes[3:4], "little"))
+        length = int.from_bytes(in_bytes[4:6], "little")
+        if length != len(in_bytes) - 1:  # STX is not counted
+            raise ValueError(
+                f"Length field does not correspond to length of data. Got {length}, should be {len(in_bytes)} "
+            )
+        destination_address_1 = int.from_bytes(in_bytes[6:8], "little")
+        destination_address_2 = int.from_bytes(in_bytes[8:9], "little")
+        source_address_1 = int.from_bytes(in_bytes[9:11], "little")
+        source_address_2 = int.from_bytes(in_bytes[11:12], "little")
+        data = in_bytes[12:-4]
+        redundancy_source = bytearray(in_bytes[1:-4])
+        lrc = in_bytes[-4]
+        calculated_lrc = utils.calculate_lrc(redundancy_source)
+        if lrc != calculated_lrc:
+            raise ValueError(
+                f"Incorrect LRC. Got {lrc!r}, should be {calculated_lrc!r}"
+            )
+        checksum = in_bytes[-3]
+        calculated_checksum = utils.calculate_checksum(redundancy_source)
+        if checksum != calculated_checksum:
+            raise ValueError(
+                f"Incorrect CHECKSUM. Got {checksum!r}, should be {calculated_checksum!r}"
+            )
+        drc = in_bytes[-2]
+        calculated_drc = utils.calculate_drc(redundancy_source)
+        if drc != calculated_drc:
+            raise ValueError(f"Incorrect DRC. Got {drc!r}, should be {drc!r}")
 
-@define
+        return cls(
+            service=service,
+            destination_address_1=destination_address_1,
+            destination_address_2=destination_address_2,
+            source_address_1=source_address_1,
+            source_address_2=source_address_2,
+            data=data,
+        )
+
+
+@attr.s(auto_attribs=True)
 class EncryptedRequest:
     TYPE: ClassVar[int] = 0x85
-    service: ServiceNumber
+    service: constants.ServiceNumber
     destination_address_1: int
     destination_address_2: int
     source_address_1: int
@@ -124,10 +151,10 @@ class EncryptedRequest:
         pass
 
 
-@define
+@attr.s(auto_attribs=True)
 class EncryptedResponse:
     TYPE: ClassVar[int] = 0x87
-    service: ServiceNumber
+    service: constants.ServiceNumber
     destination_address_1: int
     destination_address_2: int
     source_address_1: int

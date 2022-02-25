@@ -87,9 +87,20 @@ def test_escape_characters():
 
 def test_bytes_to_datetime():
     data = bytes.fromhex("103312300506")
-    timestamp = utils.bytes_to_datetime(data)
+    timestamp, is_dst, supports_dst = utils.bytes_to_datetime(data)
 
     assert timestamp.isoformat() == "2006-05-30T12:33:10"
+    assert not is_dst
+    assert not supports_dst
+
+
+def test_bytes_to_datetime2():
+    data = bytes.fromhex("004953140222")
+    timestamp, is_dst, supports_dst = utils.bytes_to_datetime(data)
+
+    assert timestamp.isoformat() == "2022-02-14T13:49:00"
+    assert not is_dst
+    assert supports_dst
 
 
 def test_datetime_to_bytes():

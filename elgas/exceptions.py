@@ -2,6 +2,14 @@ class ElgasError(Exception):
     """General Elgas error"""
 
 
+class LocalElgasProtocolError(ElgasError):
+    """Protocol error"""
+
+
+class CommunicationError(ElgasError):
+    """Communication error"""
+
+
 class WrongPasswordError(ElgasError):
     # Bit 0
     """Wrong password for action was used or password switch is not turned on"""
