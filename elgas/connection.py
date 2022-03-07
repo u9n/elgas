@@ -104,6 +104,7 @@ class ElgasConnection:
     def next_event(self) -> bytes:
 
         if not self.buffer:
+            LOG.debug("Buffer empty. Need more data")
             return state.NEED_DATA
 
         # do we have an end char?
@@ -111,14 +112,21 @@ class ElgasConnection:
             end_char_index = self.buffer.index(b"\x0d") + 1
         except ValueError:
             # No end char in buffer and we need more data.
+            LOG.debug("No end char in data. Need more data")
             return state.NEED_DATA
 
         data = self.buffer[:end_char_index]
 
         # TODO: Check if encrypted!
-        response = frames.Response.from_bytes(utils.return_characters(data))
-        LOG.debug("Received ELGAS response", response=response)
+        try:
+            response = frames.Response.from_bytes(utils.return_characters(data))
+            LOG.debug("Received ELGAS response", response=response)
+        except ValueError:
+            LOG.debug("Cannot interpret data as frame. Need more data")
+            return state.NEED_DATA
+
         pdu = ResponsePduFactory.from_response(response)
+        LOG.info("Received PDU", pdu=pdu)
 
         self.buffer = bytearray()  # clear buffer
 

@@ -4,7 +4,7 @@ from typing import Any
 import attr
 import structlog
 
-from elgas import application, connection, constants, state, transport
+from elgas import application, connection, constants, parser, state, transport
 
 LOG = structlog.get_logger("client")
 
@@ -63,14 +63,24 @@ class ElgasClient:
         LOG.info(response)
         LOG.info("Got device time", time=response.time.isoformat())
 
-    def read_parameters(self):
-        request = application.ReadDeviceParametersRequest(
-            password=self.password, object_count=1, buffer_length=1024
-        )
-        self.send(request)
-        response = self.next_event()
-        # TODO: How do we initial to recieve all the other data?
-        LOG.info(response)
+    def read_parameters(self, read_from: int = 0):
+        should_stop = False
+        total_parameter_data = b""
+        object_count = read_from
+        while not should_stop:
+            request = application.ReadDeviceParametersRequest(
+                password=self.password, object_count=object_count, buffer_length=1024
+            )
+            self.send(request)
+            response: application.ReadDeviceParametersResponse = self.next_event()
+            total_parameter_data += response.data
+            should_stop = response.is_end
+            object_count += response.object_amount
+
+        LOG.debug("Received total data", data=total_parameter_data)
+        parsed = parser.ScadaParameterParser().parse(total_parameter_data)
+        print(parsed)
+        return parsed
 
     def read_archive_by_time(self):
         request = application.ReadArchiveByTimeRequest(

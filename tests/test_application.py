@@ -26,7 +26,6 @@ def test_parse_parameter_data_object_1():
 
     pdu = application.ReadDeviceParametersResponse.from_bytes(response.data)
     print(pdu)
-    assert False
 
 
 def test_parse_parameter_data_object_0():
@@ -47,8 +46,6 @@ def test_parse_parameter_data_object_0():
     print(int.from_bytes(pdu.data[:2], "little"))
     print(len(pdu.data))
     print(pdu.data.hex())
-
-    assert False
 
 
 def test_read_several_archive():
@@ -78,4 +75,7 @@ def test_read_archive():
         ),
     )
 
+    pdu = application.ReadArchiveByTimeResponse.from_bytes(response.data)
+    print(pdu)
     assert response
+    assert False

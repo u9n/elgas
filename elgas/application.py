@@ -209,8 +209,8 @@ class ReadArchiveByTimeResponse:
     @classmethod
     def from_bytes(cls, in_bytes: bytes):
         archive = constants.Archive(in_bytes[0])
-        first_record_id = int.from_bytes(in_bytes[1:2], "little")
-        data = in_bytes[3:]
+        first_record_id = int.from_bytes(in_bytes[1:4], "little")
+        data = in_bytes[5:]
         return cls(
             archive=archive,
             first_record_id=first_record_id,

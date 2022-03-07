@@ -1,5 +1,6 @@
 import random
 from datetime import datetime
+from decimal import Decimal
 from typing import *
 
 
@@ -148,3 +149,12 @@ def from_bcd(data: bytes) -> int:
     """
     chars = data.hex()
     return int(chars)
+
+
+def pop_many(array: bytearray, amount: int) -> bytearray:
+    if amount < 2:
+        raise ValueError("Only use pop_many if you need to get more than 1 byte")
+    out = bytearray()
+    for _ in range(0, amount):
+        out.append(array.pop(0))
+    return out
