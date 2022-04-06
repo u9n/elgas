@@ -1,3 +1,19 @@
+from pprint import pprint
+
+import elgas.parameters.analog_quantity
+import elgas.parameters.binary
+import elgas.parameters.compressibility
+import elgas.parameters.conversion_coefficient
+import elgas.parameters.counter
+import elgas.parameters.diagnostics
+import elgas.parameters.error_counter
+import elgas.parameters.error_standard_counter
+import elgas.parameters.flow_rate
+import elgas.parameters.modem
+import elgas.parameters.setpoint
+import elgas.parameters.standard_counter
+import elgas.parameters.system_parameters
+import elgas.parameters.time_window
 from elgas import parameters
 from elgas.application import ReadDeviceParametersResponse
 
@@ -20,10 +36,11 @@ def test_parameter_0():
     print(object_data)
     assert len(object_data) == 270 - 3
 
-    system_parameters = parameters.SystemParameters.from_bytes(object_data)
+    system_parameters = elgas.parameters.system_parameters.SystemParameters.from_bytes(
+        object_data
+    )
 
     print(system_parameters)
-
     assert False
 
 
@@ -48,8 +65,17 @@ def test_parameter_type_30():
     )
     all_data = [data, data2, data3, data4, data5, data6]
     print(all_data)
-    analog = parameters.AnalogMeasurand.from_bytes(data2)
+    analog = elgas.parameters.analog_quantity.AnalogQuantity.from_bytes(data2)
     print(analog)
+
+
+def test_analog_to_json():
+    data2 = bytearray(
+        b"\x01\x00\x02\x00\x08\x00\x0c\x00\x9bTemperature t\x00. Vbs\x00}?}\xb0C\x00\x00\x00\x00\x00\x00\x96\x00\x16;\x00\x00H\xc2\x00\x00\xc8\xc1\x00\x00pB\xadTad\xa2\x02\\\x00\x00\x00\x0c\x00\x00\x00\x00A"
+    )
+    analog = elgas.parameters.analog_quantity.AnalogQuantity.from_bytes(data2)
+    json_data = analog.to_json()
+    pprint(json_data)
 
 
 def test_parameter_type_31():
@@ -67,7 +93,7 @@ def test_parameter_type_31():
     #     b"\x05\x001\x00\x95\x02\x00\x00U\x00\xc1Ext.power modem B6\x00o%} \x9c\x02\x00\x00\x00\x00\x00    Power OK\x00 Power error\x00"
     # )
 
-    binary = parameters.Binary.from_bytes(data1)
+    binary = elgas.parameters.binary.Binary.from_bytes(data1)
     print(binary)
 
 
@@ -76,7 +102,9 @@ def test_parameter_type_33():
     data1 = bytearray(
         b'\x00\x00\x07\x00"\x00&\x00\x97Base volume Vb\x00} \x95}"}!!m3\x00\x00\x00\x00\x00\x00\x00\x00\x1e\x00\x1a\x00\x00\x00\x02'
     )
-    standard_counter = parameters.StandardCounter.from_bytes(data1)
+    standard_counter = elgas.parameters.standard_counter.StandardCounter.from_bytes(
+        data1
+    )
     print(standard_counter)
 
 
@@ -84,7 +112,7 @@ def test_parameter_type_34():
     data1 = bytearray(
         b"\x00\x00\x04\x002\x006\x00\x8bFlow Q\x00  B3} 3}!A} } } m3/h\x00\x00\x00\x00\x9c\x02\x00\x00\x00\x00.\x00\x00\x00\x01"
     )
-    flow_rate = parameters.FlowRate.from_bytes(data1)
+    flow_rate = elgas.parameters.flow_rate.FlowRate.from_bytes(data1)
     print(flow_rate)
 
 
@@ -92,7 +120,7 @@ def test_parameter_type_35():
     data1 = bytearray(
         b"\x00\x00\n\x006\x00:\x00\x83Base flow Qb\x00}?}#} }<} m3/h\x00\x00\x00\x00\x00\x002\x00\x00\x00\x01"
     )
-    standard_flow_rate = parameters.StandardFlowRate.from_bytes(data1)
+    standard_flow_rate = elgas.parameters.flow_rate.StandardFlowRate.from_bytes(data1)
     print(standard_flow_rate)
 
 
@@ -100,7 +128,9 @@ def test_parameter_type_36():
     data1 = bytearray(
         b"\x00\x00\x05\x00:\x00>\x00\x9bConvers.factor C\x00 A5\x00\x00\x00\x00\x01\x0f\x00\x00HC\x00\x00pA\x00\x00\x80?6\x00\x00\x00\x04"
     )
-    conversion_coef = parameters.ConversionCoefficient.from_bytes(data1)
+    conversion_coef = (
+        elgas.parameters.conversion_coefficient.ConversionCoefficient.from_bytes(data1)
+    )
     print(conversion_coef)
 
 
@@ -109,7 +139,9 @@ def test_parameter_type_46():
     data1 = bytearray(
         b'\x00\x00\x08\x00*\x00.\x00\x97Spare base vol. Vbs\x000}"m3\x00\x00\x00\x00\x00\x00\x00&\x00"\x00\x00\x00\x02'
     )
-    error_standard_counter = parameters.ErrorStandardCounter.from_bytes(data1)
+    error_standard_counter = (
+        elgas.parameters.error_standard_counter.ErrorStandardCounter.from_bytes(data1)
+    )
     print(error_standard_counter)
 
 
@@ -118,7 +150,7 @@ def test_parameter_type_47():
         b"\x00\x00\x06\x00>\x00B\x00\x93Comp. ratio Z/Zb K\x00\x00\x81GS\x00:\x00\x00\x00\x04"
     )
 
-    compressibility = parameters.Compressibility.from_bytes(data1)
+    compressibility = elgas.parameters.compressibility.Compressibility.from_bytes(data1)
     print(compressibility)
 
 
@@ -131,7 +163,7 @@ def test_parameter_type_48():
     #     b"\x02\x00\x1f\x00\x92\x02\x00\x00R\x00IService window B3\x00 B3\x003\x01A\x00\x00\x00\x00\x00\x08Q\x01\x00\x00  no service\x00      active\x00"
     # )
 
-    time_window = parameters.TimeWindow.from_bytes(data1)
+    time_window = elgas.parameters.time_window.TimeWindow.from_bytes(data1)
     print(time_window)
 
 
@@ -141,7 +173,7 @@ def test_parameter_type_53():
         b"\x00\x00\x03\x00\x12\x00\x16\x00\x97Primary volume Vm\x00 } } m3\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?} } \x9c\x02\x00\x00\x00\x00\x0e\x00\n\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0b\x00\x00\x00"
     )
 
-    double_counter = parameters.DoubleCounter.from_bytes(data1)
+    double_counter = elgas.parameters.counter.DoubleCounter.from_bytes(data1)
     print(double_counter)
 
 
@@ -150,7 +182,9 @@ def test_parameter_type_54():
     data1 = bytearray(
         b"\x00\x00\t\x00\x1a\x00\x1e\x00\x97Spare prim. vol. Vs\x00   m3\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x16\x00\x12\x00\x00\x00\x00\x0b\x00\x00\x00"
     )
-    double_error_counter = parameters.DoubleErrorCounter.from_bytes(data1)
+    double_error_counter = elgas.parameters.error_counter.DoubleErrorCounter.from_bytes(
+        data1
+    )
     print(double_error_counter)
 
 
@@ -160,7 +194,7 @@ def test_parameteer_type_59():
         b"\x00\x00'\x00J\x00N\x00\xc7Status St1\x00Closed\x00     >\x00*\x00\xffo\xea\xec\xff\x0b\xff\xdf\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
     )
 
-    diagnostics = parameters.Diagnostics.from_bytes(data1)
+    diagnostics = elgas.parameters.diagnostics.Diagnostics.from_bytes(data1)
     print(diagnostics)
 
 
@@ -169,7 +203,7 @@ def test_parameter_type_70():
     data1 = bytearray(
         b'\x00\x004\x00\x96\x02\x00\x00V\x00\xc1Setpoint Q max S1\x00} }  \x00<\x1cF"\x00\x00    Inactive\x00      Active\x00'
     )
-    setpoint = parameters.SetPoint.from_bytes(data1)
+    setpoint = elgas.parameters.setpoint.SetPoint.from_bytes(data1)
     print(setpoint)
 
 
@@ -178,7 +212,7 @@ def test_parameter_type_74():
     data1 = bytearray(
         b"\x00\x00&\x00B\x00F\x00\x91Compressibility Z\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04"
     )
-    compress = parameters.CompressibilityZ.from_bytes(data1)
+    compress = elgas.parameters.compressibility.CompressibilityZ.from_bytes(data1)
     print(compress)
 
 
@@ -186,7 +220,7 @@ def test_parameter_type_75():
     data1 = bytearray(
         b"\x00\x00%\x00F\x00J\x00\x91Base compress. Zb\x00ver B\x00\x00\x00\x00\x00\x04"
     )
-    compress = parameters.CompressibilityZBase.from_bytes(data1)
+    compress = elgas.parameters.compressibility.CompressibilityZBase.from_bytes(data1)
     print(compress)
 
 
@@ -195,6 +229,5 @@ def test_parameter_type_141():
     data1 = bytearray(
         b'\x00\x12\x00\x00\x00\x00\x00\x00\x00\x05ATS0=1\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00ATD*99***1#\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00ATH\x00\x00\x00\x00\x00AT+CGDCONT=1,"IP","elvaco.tele2.m2m"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00y\x15Tg4\x81G\x99Bf\x11E\x00y\x15Tg4\x81G\x99Bf\x11E\x00y\x15Tg4\x81G\x00\x00\x00\x00\x00\x00+++\x00\x00\x00\x00\x00y\x15Tg4\x81G\x99B\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
     )
-    modem = parameters.Modem.from_bytes(data1)
+    modem = elgas.parameters.modem.Modem.from_bytes(data1)
     print(modem)
-    assert False

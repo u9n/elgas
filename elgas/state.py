@@ -34,13 +34,33 @@ IDLE = make_sentinel("IDLE")
 AWAITING_READ_ACTUAL_VALUES_RESPONSE = make_sentinel(
     "AWAITING_READ_ACTUAL_VALUES_RESPONSE"
 )
-
+AWAITING_READ_DEVICE_PARAMETERS_RESPONSE = make_sentinel(
+    "AWAITING_READ_DEVICE_PARAMETERS_RESPONSE"
+)
+AWAITING_READ_TIME_RESPONSE = make_sentinel("AWAITING_READ_TIME_RESPONSE")
+AWAITING_READ_ARCHIVE_BY_TIME_RESPONSE = make_sentinel(
+    "AWAITING_READ_ARCHIVE_BY_TIME_RESPONSE"
+)
 NEED_DATA = make_sentinel("NEED_DATA")
 
 
 ELGAS_STATE_TRANSITIONS = {
-    IDLE: {application.ReadActualValuesRequest: AWAITING_READ_ACTUAL_VALUES_RESPONSE},
-    AWAITING_READ_ACTUAL_VALUES_RESPONSE: {application.ReadActualValuesResponse: IDLE},
+    IDLE: {
+        application.ReadActualValuesRequest: AWAITING_READ_ACTUAL_VALUES_RESPONSE,
+        application.ReadDeviceParametersRequest: AWAITING_READ_DEVICE_PARAMETERS_RESPONSE,
+        application.ReadTimeRequest: AWAITING_READ_TIME_RESPONSE,
+        application.ReadArchiveByTimeRequest: AWAITING_READ_ARCHIVE_BY_TIME_RESPONSE,
+    },
+    AWAITING_READ_ACTUAL_VALUES_RESPONSE: {
+        application.ReadInstantaneousValuesResponse: IDLE,
+    },
+    AWAITING_READ_DEVICE_PARAMETERS_RESPONSE: {
+        application.ReadDeviceParametersResponse: IDLE
+    },
+    AWAITING_READ_TIME_RESPONSE: {application.ReadTimeResponse: IDLE},
+    AWAITING_READ_ARCHIVE_BY_TIME_RESPONSE: {
+        application.ReadArchiveByTimeResponse: IDLE
+    },
 }
 
 

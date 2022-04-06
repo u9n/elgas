@@ -15,15 +15,20 @@ class ElgasClient:
 
     transport: transport.ElgasTransport
     password: str
+    password_id: int
+    encryption_key: bytes
+    encryption_key_id: int
     elgas_connection: connection.ElgasConnection = attr.ib(
         default=attr.Factory(
             lambda self: connection.ElgasConnection(
                 password=self.password,
-                password_id=801,
+                password_id=self.password_id,
                 destination_address_1=0,
                 destination_address_2=0,
                 source_address_1=0,
                 source_address_2=0,
+                encryption_key=self.encryption_key,
+                encryption_key_id=self.encryption_key_id,
             ),
             takes_self=True,
         )
@@ -68,18 +73,21 @@ class ElgasClient:
         total_parameter_data = b""
         object_count = read_from
         while not should_stop:
+            LOG.info("Requesting device parameters", object_count=object_count)
             request = application.ReadDeviceParametersRequest(
                 password=self.password, object_count=object_count, buffer_length=1024
             )
             self.send(request)
             response: application.ReadDeviceParametersResponse = self.next_event()
+            LOG.info("Received device parameters", object_amount=response.object_amount)
             total_parameter_data += response.data
             should_stop = response.is_end
             object_count += response.object_amount
+            if not should_stop:
+                LOG.info("More parameters available", next_object_count=object_count)
 
         LOG.debug("Received total data", data=total_parameter_data)
         parsed = parser.ScadaParameterParser().parse(total_parameter_data)
-        print(parsed)
         return parsed
 
     def read_archive_by_time(self):

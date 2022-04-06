@@ -5,8 +5,7 @@ from typing import *
 import attr
 import structlog
 
-from elgas import application, constants, frames, state, utils
-from elgas.security import EncryptionKeyId
+from elgas import application, constants, exceptions, frames, security, state, utils
 
 LOG = structlog.get_logger("connection")
 
@@ -18,7 +17,7 @@ class ResponsePduFactory:
     """
 
     service_map: ClassVar[Mapping] = {
-        constants.ServiceNumber.READ_VALUES: application.ReadActualValuesResponse,
+        constants.ServiceNumber.READ_VALUES: application.ReadInstantaneousValuesResponse,
         constants.ServiceNumber.READ_DEVICE_TIME: application.ReadTimeResponse,
         constants.ServiceNumber.READ_SCADA_PARAMETERS: application.ReadDeviceParametersResponse,
         constants.ServiceNumber.READ_ARCHIVES_BY_DATE: application.ReadArchiveByTimeResponse,
@@ -28,6 +27,20 @@ class ResponsePduFactory:
     def from_response(response: frames.Response):
         klass = ResponsePduFactory.service_map[response.service]
         return klass.from_bytes(response.data)
+
+
+def create_cipher_context(
+    connection: "ElgasConnection",
+) -> Optional[security.CipherContext]:
+    """
+    If both encryption key and encryption key id is set then return a cipher context
+    """
+    if connection.encryption_key is None or connection.encryption_key_id is None:
+        return None
+    else:
+        return security.CipherContext(
+            connection.encryption_key_id, connection.encryption_key
+        )
 
 
 @attr.s(auto_attribs=True)
@@ -60,22 +73,35 @@ class ElgasConnection:
         validator=[attr.validators.ge(801), attr.validators.le(849)]
     )
 
-    encryption_key: bytes | None = attr.ib(default=None)
-    encryption_key_id: EncryptionKeyId | None = attr.ib(default=None)
+    encryption_key: Optional[bytes] = attr.ib(default=None)
+    encryption_key_id: Optional[security.EncryptionKeyId] = attr.ib(default=None)
     # TODO: Validate that there is an encryption key id if there is an encryption key.
 
     buffer: bytearray = attr.ib(init=False, factory=bytearray)
     elgas_state: state.ElgasState = attr.ib(factory=state.ElgasState)
+    cipher_context: Optional[security.CipherContext] = attr.ib(
+        default=attr.Factory(lambda self: create_cipher_context(self), takes_self=True)
+    )
 
     def send(self, event) -> bytes:
 
         LOG.debug("Sending request PDU", pdu=event)
+        self.elgas_state.process_event(event)
+        application_data = event.to_bytes()
 
-        if self.encryption_key:
-            raise NotImplementedError("encryption not implemented")
+        if self.cipher_context:
+            # replace application_data with encrypted data.
+
+            request = frames.EncryptedRequest(
+                service=event.service,
+                destination_address_1=self.destination_address_1,
+                destination_address_2=self.destination_address_2,
+                source_address_1=self.source_address_1,
+                source_address_2=self.source_address_2,
+                data=self.cipher_context.encrypt(application_data),
+            )
 
         else:
-            application_data = event.to_bytes()
             request = frames.Request(
                 service=event.service,
                 destination_address_1=self.destination_address_1,
@@ -92,7 +118,8 @@ class ElgasConnection:
 
     def receive_data(self, data: bytes):
         """
-        Add data into the receive buffer.
+        Add data into the receive buffer. Also deescape the data so correct data is in
+        the buffer.
         After this you could call next_event
         """
         if data:
@@ -116,18 +143,46 @@ class ElgasConnection:
             return state.NEED_DATA
 
         data = self.buffer[:end_char_index]
-
-        # TODO: Check if encrypted!
         try:
-            response = frames.Response.from_bytes(utils.return_characters(data))
+            response = frames.ResponseFactory.from_bytes(utils.return_characters(data))
+
+            if len(response.data) == 1:
+                self.raise_error(response.data)
+
             LOG.debug("Received ELGAS response", response=response)
-        except ValueError:
+
+            if isinstance(response, frames.EncryptedResponse):
+                response.data = self.cipher_context.decrypt(response.data)
+                LOG.debug("Decrypted ELGAS response", decrypted=response)
+
+        except ValueError as e:
+            LOG.exception(e)
             LOG.debug("Cannot interpret data as frame. Need more data")
             return state.NEED_DATA
 
         pdu = ResponsePduFactory.from_response(response)
         LOG.info("Received PDU", pdu=pdu)
+        self.elgas_state.process_event(pdu)
 
         self.buffer = bytearray()  # clear buffer
 
         return pdu
+
+    def raise_error(self, data: bytes):
+        error = data[0]
+        if error == 0b00000001:
+            raise exceptions.WrongPasswordError()
+        elif error == 0b00000010:
+            raise exceptions.SettingArchiveFull()
+        elif error == 0b00000100:
+            raise exceptions.SwitchOff()
+        elif error == 0b00001000:
+            raise exceptions.BlockedBuffer()
+        elif error == 0b00010000:
+            raise exceptions.DataError()
+        elif error == 0b00100000:
+            raise exceptions.CipherKeyError()
+        elif error == 0b01000000:
+            raise exceptions.WrongEncryptionKeysError()
+        elif error == 0b10000000:
+            raise exceptions.WriteError()

@@ -2,6 +2,9 @@ from typing import *
 
 import attr
 
+import elgas.parameters
+import elgas.parameters.enumerations
+import elgas.parameters.factory
 from elgas import parameters
 from elgas.utils import pop_many
 
@@ -29,22 +32,13 @@ class ScadaParameterParser:
 
         while working_data:
             length = int.from_bytes(pop_many(working_data, 2), "little")
-            object_type = parameters.ParameterObjectType(working_data.pop(0))
+            object_type = elgas.parameters.enumerations.ParameterObjectType(
+                working_data.pop(0)
+            )
             data = working_data[: length - 3]
-
-            if object_type == parameters.ParameterObjectType.SYSTEM_PARAMETER:
-                ## We cant parse this properly yet due to documentation error
-                object_list.append(
-                    SimpleObjectHolder(
-                        length=length, object_type=object_type, data=data
-                    )
-                )
-
-            else:
-
-                object_list.append(
-                    parameters.ParameterFactory.from_bytes(object_type, data)
-                )
+            object_list.append(
+                elgas.parameters.factory.ParameterFactory.from_bytes(object_type, data)
+            )
 
             working_data = working_data[length - 3 :]
 

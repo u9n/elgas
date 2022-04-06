@@ -35,44 +35,46 @@ class ReadActualValuesRequest:
 
 
 @attr.s(auto_attribs=True)
-class ReadActualValuesResponse:
+class ReadInstantaneousValuesResponse:
     """
-    A long datastructure of parameters that depends on the firmware of the device
+    A long datastructure of parameters that depends on the firmware of the device.
+    The parsing is set to ELCORplus Gen 4.
+    Instantaneous values are called Actual Values in documentation.
     """
 
     service: ClassVar[constants.ServiceNumber] = constants.ServiceNumber.READ_VALUES
+    current_time: datetime
+    is_dst: bool
+    supports_dst: bool
     data: bytes
+    data_access: int
+    status: int
+    summary_status: int
+    parameter_crc: bytes
 
     @classmethod
     def from_bytes(cls, in_bytes: bytes):
-        return cls(data=in_bytes)
-
-
-@attr.s(auto_attribs=True)
-class ReadActualValuesResponseV1:
-    """
-    For firmware versions < 1.18
-    """
-
-    ...
-
-
-@attr.s(auto_attribs=True)
-class ReadActualValuesResponseV2:
-    """
-    For firmware versions  1.18 < fwv < 1.99
-    """
-
-    ...
-
-
-@attr.s(auto_attribs=True)
-class ReadActualValuesResponseV3:
-    """
-    For firmware versions > 2.00 and Elcor gen 4
-    """
-
-    ...
+        data = in_bytes
+        current_time, is_dst, supports_dst = utils.bytes_to_datetime(data[:6])
+        data = data[6:]
+        parameter_crc = data[-2:]
+        data = data[:-2]
+        summary_status = data[-8:]
+        data = data[:-8]
+        status = data[-8:]
+        data = data[:-8]
+        data_access = data[-1]
+        data = data[:-1]
+        return cls(
+            data=data,
+            current_time=current_time,
+            is_dst=is_dst,
+            supports_dst=supports_dst,
+            parameter_crc=parameter_crc,
+            summary_status=summary_status,
+            status=status,
+            data_access=data_access,
+        )
 
 
 @attr.s(auto_attribs=True)

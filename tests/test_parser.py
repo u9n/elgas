@@ -14,7 +14,6 @@ def test_parser():
     pretty_list = [asdict(x) for x in object_list]
     pprint(pretty_list)
     assert len(object_list) == 26
-    # assert False
 
 
 @attr.s(auto_attribs=True)

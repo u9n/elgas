@@ -32,6 +32,32 @@ def calculate_drc(data: bytearray) -> int:
     return drc & 0xFF
 
 
+def generate_crc16_table():
+    result = []
+    for byte in range(256):
+        crc = 0x0000
+        for _ in range(8):
+            if (byte ^ crc) & 0x0001:
+                crc = (crc >> 1) ^ 0xA001
+            else:
+                crc >>= 1
+            byte >>= 1
+        result.append(crc)
+    return result
+
+
+crc16_table = generate_crc16_table()
+
+
+def calculate_crc(data: bytearray):
+    crc = 0xFFFF
+    for a in data:
+        idx = crc16_table[(crc ^ a) & 0xFF]
+        crc = ((crc >> 8) & 0xFF) ^ idx
+    result = ((crc << 8) & 0xFF00) | ((crc >> 8) & 0x00FF)
+    return result
+
+
 def escape_characters(data: bytes) -> bytes:
     """
     Characters that are used for telegram control are replaced with others
@@ -158,3 +184,19 @@ def pop_many(array: bytearray, amount: int) -> bytearray:
     for _ in range(0, amount):
         out.append(array.pop(0))
     return out
+
+
+def pretty_text(in_data: bytes) -> str:
+    """
+    To removed data that should not be present in the text but might be on bit-level
+    """
+    termination_char = b"\x00"
+
+    try:
+        last_termination_char = in_data.rindex(termination_char)
+        print(last_termination_char)
+        in_data = in_data[:last_termination_char]
+    except ValueError:
+        # no termination char in text
+        pass
+    return in_data.replace(b"\x00", b" ").lstrip().rstrip().decode("latin-1")

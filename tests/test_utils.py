@@ -1,5 +1,7 @@
 from datetime import datetime
 
+import pytest
+
 from elgas import utils
 
 
@@ -114,3 +116,8 @@ def test_pad_password():
     password = "123456"
     padded = utils.pad_password(password)
     assert len(padded) == 10
+
+
+@pytest.mark.parametrize(("input", "output"), [(b"MJ/m3\x003\x00", "MJ/m3 3")])
+def test_pretty_text(input: bytes, output: str):
+    assert utils.pretty_text(input) == output
