@@ -2,6 +2,8 @@ import struct
 from typing import ClassVar, Optional
 
 import attr
+import marshmallow
+from marshmallow import post_load
 
 from elgas.parameters.enumerations import ParameterObjectType
 from elgas.utils import pop_many, pretty_text
@@ -16,10 +18,10 @@ class AnalogStatistics:
     address_in_actual_values: int  # Always 0
     address_in_data_archive_record: int
     bit_control: int
-    in_data_archive: int
-    in_daily_archive: int
-    in_monthly_archive: int
-    is_metrological_quantity: int
+    in_data_archive: bool
+    in_daily_archive: bool
+    in_monthly_archive: bool
+    is_metrological_quantity: bool
     name: str
     unit: str
     digit: float
@@ -78,8 +80,40 @@ class AnalogStatistics:
         )
 
 
+class AnalogStatisticsSchema(marshmallow.Schema):
+
+    number = marshmallow.fields.Integer(required=True)
+    id = marshmallow.fields.Integer(required=True)
+    address_in_actual_values = marshmallow.fields.Integer(required=True)
+    address_in_data_archive_record = marshmallow.fields.Integer(required=True)
+    bit_control = marshmallow.fields.Integer(required=True)
+    in_data_archive = marshmallow.fields.Boolean(required=True)
+    in_daily_archive = marshmallow.fields.Boolean(required=True)
+    in_monthly_archive = marshmallow.fields.Boolean(required=True)
+    is_metrological_quantity = marshmallow.fields.Boolean(required=True)
+    name = marshmallow.fields.String(required=True)
+    unit = marshmallow.fields.String(required=True)
+    digit = marshmallow.fields.Float(required=True, as_string=True)
+    offset = marshmallow.fields.Float(required=True, as_string=True)
+    number_of_primary_quantity = marshmallow.fields.Integer(required=True)
+    statistics_type = marshmallow.fields.Integer(required=True)
+    address_in_daily_archive_record = marshmallow.fields.Integer(required=True)
+    address_in_monthly_archive_record = marshmallow.fields.Integer(required=True)
+    decimals = marshmallow.fields.Integer(required=True, allow_none=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return AnalogStatistics(**data)
+
+
 class Statistics(AnalogStatistics):
     object_type: ClassVar[ParameterObjectType] = ParameterObjectType.STATISTICS
+
+
+class StatisticsSchema(AnalogStatisticsSchema):
+    @post_load
+    def make_object(self, data, **kwargs):
+        return Statistics(**data)
 
 
 class AnalogTimeStatistics(AnalogStatistics):
@@ -88,8 +122,20 @@ class AnalogTimeStatistics(AnalogStatistics):
     ] = ParameterObjectType.ANALOG_TIME_STATISTICS
 
 
+class AnalogTimeStatisticsSchema(AnalogStatisticsSchema):
+    @post_load
+    def make_object(self, data, **kwargs):
+        return AnalogTimeStatistics(**data)
+
+
 class TimeStatistics(AnalogStatistics):
     object_type: ClassVar[ParameterObjectType] = ParameterObjectType.TIME_STATISTICS
+
+
+class TimeStatisticsSchema(AnalogStatisticsSchema):
+    @post_load
+    def make_object(self, data, **kwargs):
+        return TimeStatistics(**data)
 
 
 @attr.s(auto_attribs=True)
@@ -101,10 +147,10 @@ class CounterStatistics:
     address_in_actual_values: int  # Always 0
     address_in_data_archive_record: int  # Always 0
     bit_control: int
-    in_data_archive: int
-    in_daily_archive: int
-    in_monthly_archive: int
-    is_metrological_quantity: int
+    in_data_archive: bool
+    in_daily_archive: bool
+    in_monthly_archive: bool
+    is_metrological_quantity: bool
     name: str
     unit: str
     digit: float
@@ -162,3 +208,34 @@ class StandardCounterStatistics(CounterStatistics):
     object_type: ClassVar[
         ParameterObjectType
     ] = ParameterObjectType.STANDARD_COUNTER_STATISTICS
+
+
+class CounterStatisticsSchema(marshmallow.Schema):
+
+    number = marshmallow.fields.Integer(required=True)
+    id = marshmallow.fields.Integer(required=True)
+    address_in_actual_values = marshmallow.fields.Integer(required=True)
+    address_in_data_archive_record = marshmallow.fields.Integer(required=True)
+    bit_control = marshmallow.fields.Integer(required=True)
+    in_data_archive = marshmallow.fields.Boolean(required=True)
+    in_daily_archive = marshmallow.fields.Boolean(required=True)
+    in_monthly_archive = marshmallow.fields.Boolean(required=True)
+    is_metrological_quantity = marshmallow.fields.Boolean(required=True)
+    name = marshmallow.fields.String(required=True)
+    unit = marshmallow.fields.String(required=True)
+    digit = marshmallow.fields.Float(required=True, as_string=True)
+    type_of_primary_quantity = marshmallow.fields.Integer(required=True)
+    number_of_primary_quantity = marshmallow.fields.Integer(required=True)
+    statistics_type = marshmallow.fields.Integer(required=True)
+    address_in_daily_archive_record = marshmallow.fields.Integer(required=True)
+    address_in_monthly_archive_record = marshmallow.fields.Integer(required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return CounterStatistics(**data)
+
+
+class StandardCounterStatisticsSchema(CounterStatisticsSchema):
+    @post_load
+    def make_object(self, data, **kwargs):
+        return StandardCounterStatistics(**data)

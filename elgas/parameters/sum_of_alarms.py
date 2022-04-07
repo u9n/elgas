@@ -1,6 +1,8 @@
 from typing import ClassVar, Optional
 
 import attr
+import marshmallow
+from marshmallow import post_load
 
 from elgas.parameters.enumerations import ParameterObjectType
 from elgas.utils import pop_many, pretty_text
@@ -65,3 +67,26 @@ class SumOfAlarms:
             text_log_0=text_log_0,
             text_log_1=text_log_1,
         )
+
+
+class SumOfAlarmsSchema(marshmallow.Schema):
+    number = marshmallow.fields.Integer(required=True)
+    id = marshmallow.fields.Integer(required=True)
+    bit_order_in_actual_values = marshmallow.fields.Integer(required=True)
+    bit_order_in_data_archive_record = marshmallow.fields.Integer(required=True)
+    bit_order_in_binary_archive_record = marshmallow.fields.Integer(required=True)
+
+    bit_control = marshmallow.fields.Integer(required=True)
+    in_binary_archive = marshmallow.fields.Boolean(required=True)
+    in_data_archive = marshmallow.fields.Boolean(required=True)
+    name = marshmallow.fields.String(required=True)
+    error_bit_order_in_actual_values = marshmallow.fields.Integer(required=True)
+    error_bit_order_in_binary_archive_record = marshmallow.fields.Integer(required=True)
+    error_bit_order_in_data_archive_record = marshmallow.fields.Integer(required=True)
+    action_during_change = marshmallow.fields.Integer(required=True, allow_none=True)
+    text_log_0 = marshmallow.fields.String(required=True, allow_none=True)
+    text_log_1 = marshmallow.fields.String(required=True, allow_none=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return SumOfAlarms(**data)

@@ -1,6 +1,8 @@
 from typing import ClassVar, Iterable, Optional
 
 import attr
+import marshmallow
+from marshmallow import post_load
 
 from elgas.parameters.enumerations import ParameterObjectType
 from elgas.utils import pop_many, pretty_text
@@ -21,7 +23,7 @@ class TimeWindow:
     in_data_archive: bool
     name: str
     rows_in_window: int
-    rows: Iterable[bytes]
+    rows: Iterable[str]
     action_during_change: Optional[int]
     text_log_0: Optional[str]
     text_log_1: Optional[str]
@@ -42,7 +44,7 @@ class TimeWindow:
         rows_in_window = data.pop(0)
         rows = list()
         for _ in range(0, rows_in_window):
-            rows.append(pop_many(data, 10))
+            rows.append(pop_many(data, 10).hex())
         if data:
             action_during_change = data.pop(0)
             text_log_0 = pretty_text(pop_many(data, 13))
@@ -70,3 +72,26 @@ class TimeWindow:
             text_log_0=text_log_0,
             text_log_1=text_log_1,
         )
+
+
+class TimeWindowSchema(marshmallow.Schema):
+
+    number = marshmallow.fields.Integer(required=True)
+    id = marshmallow.fields.Integer(required=True)
+    bit_order_in_actual_values = marshmallow.fields.Integer(required=True)
+    bit_order_in_data_archive_record = marshmallow.fields.Integer(required=True)
+    bit_order_in_binary_archive_record = marshmallow.fields.Integer(required=True)
+
+    bit_control = marshmallow.fields.Integer(required=True)
+    in_binary_archive = marshmallow.fields.Boolean(required=True)
+    in_data_archive = marshmallow.fields.Boolean(required=True)
+    name = marshmallow.fields.String(required=True)
+    rows_in_window = marshmallow.fields.Integer(required=True)
+    rows = marshmallow.fields.List(marshmallow.fields.String, required=True)
+    action_during_change = marshmallow.fields.Integer(required=True, allow_none=True)
+    text_log_0 = marshmallow.fields.String(required=True, allow_none=True)
+    text_log_1 = marshmallow.fields.String(required=True, allow_none=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return TimeWindow(**data)

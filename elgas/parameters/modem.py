@@ -1,6 +1,7 @@
 from typing import ClassVar, Optional
 
 import attr
+import marshmallow
 
 from elgas.parameters.enumerations import ParameterObjectType
 from elgas.utils import pop_many, pretty_text
@@ -18,7 +19,7 @@ class Modem:
     call_to_dispatching: str
     modem_hang_up: str
     special_initialization: str
-    ip_address_for_registration_and_diagnostics: bytes
+    ip_address_for_registration_and_diagnostics: bytes  # TODO: should be string
     ip_address_for_calling_to_dispatching: bytes
     registration_send_period: int
     authentication_mode: int
@@ -85,3 +86,31 @@ class Modem:
             pin=pin,
             owner_sim_number=owner_sim_number,
         )
+
+
+class ModemSchema(marshmallow.Schema):
+
+    number = marshmallow.fields.Integer(required=True)
+    bit_control_0 = marshmallow.fields.Integer(required=True)
+    title = marshmallow.fields.String(required=True)
+    modem_type = marshmallow.fields.Integer(required=True)
+    initialization = marshmallow.fields.String(required=True)
+    call_to_dispatching = marshmallow.fields.String(required=True)
+    modem_hang_up = marshmallow.fields.String(required=True)
+    special_initialization = marshmallow.fields.String(required=True)
+    ip_address_for_registration_and_diagnostics = marshmallow.fields.String(
+        required=True
+    )
+    ip_address_for_calling_to_dispatching = marshmallow.fields.String(required=True)
+    registration_send_period = marshmallow.fields.Integer(required=True)
+    authentication_mode = marshmallow.fields.Integer(required=True)
+    port_for_registration = marshmallow.fields.Integer(required=True)
+    port_for_calling_to_dispatching = marshmallow.fields.Integer(required=True)
+    sms_call = marshmallow.fields.String(required=True)
+    gprs_user_name = marshmallow.fields.String(required=True)
+    gprs_password = marshmallow.fields.String(required=True)
+    ip_address_for_ping = marshmallow.fields.String(required=True)
+    ping_period = marshmallow.fields.Integer(required=True)
+    transition_into_command_mode = marshmallow.fields.String(required=True)
+    pin = marshmallow.fields.String(required=True)
+    owner_sim_number = marshmallow.fields.String(required=True, allow_none=True)

@@ -2,6 +2,7 @@ import struct
 from typing import ClassVar, Optional
 
 import attr
+import marshmallow
 
 from elgas.parameters.enumerations import ParameterObjectType
 from elgas.utils import pop_many, pretty_text
@@ -23,7 +24,7 @@ class SetPoint:
     active_indicator: bool
     name: str
     value_of_limit: float
-    type_of_primary_quantity: ParameterObjectType
+    type_of_primary_quantity: int
     number_of_primary_quantity: int
     action_during_change: Optional[int]
     text_log_0: Optional[str]
@@ -43,7 +44,7 @@ class SetPoint:
         active_indicator = bool(bit_control & 0b01000000)
         name = pretty_text(pop_many(data, 23))
         value_of_limit = struct.unpack("<f", pop_many(data, 4))[0]
-        type_of_primary_quantity = ParameterObjectType(data.pop(0))
+        type_of_primary_quantity = data.pop(0)
         number_of_primary_quantity = data.pop(0)
 
         if data:
@@ -75,3 +76,24 @@ class SetPoint:
             text_log_0=text_log_0,
             text_log_1=text_log_1,
         )
+
+
+class SetPointSchema(marshmallow.Schema):
+
+    number = marshmallow.fields.Integer(required=True)
+    id = marshmallow.fields.Integer(required=True)
+    bit_order_in_actual_values = marshmallow.fields.Integer(required=True)
+    bit_order_in_data_archive_record = marshmallow.fields.Integer(required=True)
+    bit_order_in_binary_archive_record = marshmallow.fields.Integer(required=True)
+
+    bit_control = marshmallow.fields.Integer(required=True)
+    in_binary_archive = marshmallow.fields.Boolean(required=True)
+    in_data_archive = marshmallow.fields.Boolean(required=True)
+    active_indicator = marshmallow.fields.Boolean(required=True)
+    name = marshmallow.fields.String(required=True)
+    value_of_limit = marshmallow.fields.Float(required=True, as_string=True)
+    type_of_primary_quantity = marshmallow.fields.Integer(required=True)
+    number_of_primary_quantity = marshmallow.fields.Integer(required=True)
+    action_during_change = marshmallow.fields.Integer(required=True, allow_none=True)
+    text_log_0 = marshmallow.fields.Integer(required=True, allow_none=True)
+    text_log_1 = marshmallow.fields.Integer(required=True, allow_none=True)

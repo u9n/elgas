@@ -2,6 +2,8 @@ import struct
 from typing import ClassVar
 
 import attr
+import marshmallow
+from marshmallow import post_load
 
 from elgas.parameters.enumerations import (
     CertificationVariant,
@@ -10,7 +12,7 @@ from elgas.parameters.enumerations import (
     ParameterObjectType,
     SwitchFunction,
 )
-from elgas.parameters.gas_composition import GasComposition
+from elgas.parameters.gas_composition import GasComposition, GasCompositionSchema
 from elgas.utils import pop_many, pretty_text
 
 
@@ -18,7 +20,7 @@ from elgas.utils import pop_many, pretty_text
 class SystemParameters:
     object_type: ClassVar[ParameterObjectType] = ParameterObjectType.SYSTEM_PARAMETER
 
-    device_type: DeviceType
+    device_type: int
     serial_number: int
     firmware_version: str  # TODO: Length 5
     service_version: int  # Used in how to parse the object.
@@ -29,12 +31,12 @@ class SystemParameters:
     metrological_switch: bool
     user_switch: bool
     switch_function: int
-    parameter_crc: bytes  # to check if parameters have been changed from a previous read.
+    parameter_crc: int  # to check if parameters have been changed from a previous read.
     measuring_period: int  # seconds
     archive_period: int  # seconds
     base_pressure: float
     base_temperature: float
-    compressibility_formula: CompressibilityFormula
+    compressibility_formula: int
     gas_composition: GasComposition
     data_archive_record_length: int
     binary_archive_record_length: int
@@ -75,7 +77,7 @@ class SystemParameters:
     bit_control: int
     places_for_corrected_volume_counters: int
     device_features_bits: int
-    device_features: bytes
+    device_features: str
     version_metrological_part: str
     metrological_crc: int
     metrological_crc_32: int
@@ -87,7 +89,7 @@ class SystemParameters:
         # first 2 bytes is length and not included in parsing
         # third byte is object type and not included in parsing.
         data = bytearray(in_bytes)
-        device_type = DeviceType(data.pop(0))
+        device_type = data.pop(0)
         serial_number = int.from_bytes(pop_many(data, 4), "little")
         firmware_version = pretty_text(pop_many(data, 5))
         service_version = data.pop(0)
@@ -99,12 +101,12 @@ class SystemParameters:
         metrological_switch = bool(data_access & 0b00000100)
         user_switch = bool(data_access & 0b00001000)
         switch_function = int((data_access & 0b00110000) >> 4)
-        parameter_crc = pop_many(data, 2)
+        parameter_crc = int.from_bytes(pop_many(data, 2), "little")
         measuring_period = data.pop(0)
         archiving_period = int.from_bytes(pop_many(data, 2), "little")
         base_pressure = struct.unpack("<f", pop_many(data, 4))[0]
         base_temperature = struct.unpack("<f", pop_many(data, 4))[0]
-        compressibility_formula = CompressibilityFormula(data.pop(0))
+        compressibility_formula = data.pop(0)
         gas_composition = GasComposition.from_bytes(pop_many(data, (23 * 4)))
         # The record lengths are including the header with time.
         data_archive_record_length = int.from_bytes(pop_many(data, 2), "little")
@@ -154,7 +156,7 @@ class SystemParameters:
         bit_control = data.pop(0)
         corrected_volume_counters_amount = data.pop(0)
         device_features_bits = data.pop(0)
-        device_features = pop_many(data, 16)
+        device_features = pop_many(data, 16).hex()
         version_metrological_part = pretty_text(pop_many(data, 5))
         metrological_crc = int.from_bytes(pop_many(data, 2), "little")
         metrological_crc_32 = int.from_bytes(pop_many(data, 4), "little")
@@ -226,3 +228,73 @@ class SystemParameters:
             metrological_crc_32=metrological_crc_32,
             application_crc_32=application_crc_32,
         )
+
+
+class SystemParametersSchema(marshmallow.Schema):
+
+    device_type = marshmallow.fields.Integer(required=True)
+    serial_number = marshmallow.fields.Integer(required=True)
+    firmware_version = marshmallow.fields.String(required=True)
+    service_version = marshmallow.fields.Integer(required=True)
+    certification_variant = marshmallow.fields.Integer(required=True)
+    station_id = marshmallow.fields.String(required=True)
+    password_for_full_access_active = marshmallow.fields.Boolean(required=True)
+    password_for_reading_is_on = marshmallow.fields.Boolean(required=True)
+    metrological_switch = marshmallow.fields.Boolean(required=True)
+    user_switch = marshmallow.fields.Boolean(required=True)
+    switch_function = marshmallow.fields.Integer(required=True)
+    parameter_crc = marshmallow.fields.Integer(required=True)
+    measuring_period = marshmallow.fields.Integer(required=True)
+    archive_period = marshmallow.fields.Integer(required=True)
+    base_pressure = marshmallow.fields.Float(required=True, as_string=True)
+    base_temperature = marshmallow.fields.Float(required=True, as_string=True)
+    compressibility_formula = marshmallow.fields.Integer(required=True)
+    gas_composition = marshmallow.fields.Nested(GasCompositionSchema, required=True)
+    data_archive_record_length = marshmallow.fields.Integer(required=True)
+    binary_archive_record_length = marshmallow.fields.Integer(required=True)
+    daily_archive_record_length = marshmallow.fields.Integer(required=True)
+    monthly_archive_record_length = marshmallow.fields.Integer(required=True)
+    instantaneous_values_error_bit_order = marshmallow.fields.Integer(required=True)
+    binary_archive_record_error_bit_order = marshmallow.fields.Integer(required=True)
+    data_archive_record_error_bit_order = marshmallow.fields.Integer(required=True)
+    optical_port_speed = marshmallow.fields.Integer(required=True)
+    optical_port_protocol = marshmallow.fields.Integer(required=True)
+    optical_port_bit_control = marshmallow.fields.Integer(required=True)
+    communication_port_0_speed = marshmallow.fields.Integer(required=True)
+    communication_port_0_protocol = marshmallow.fields.Integer(required=True)
+    communication_port_0_bit_control = marshmallow.fields.Integer(required=True)
+    communication_port_1_speed = marshmallow.fields.Integer(required=True)
+    communication_port_1_protocol = marshmallow.fields.Integer(required=True)
+    communication_port_1_bit_control = marshmallow.fields.Integer(required=True)
+    communication_port_2_speed = marshmallow.fields.Integer(required=True)
+    communication_port_2_protocol = marshmallow.fields.Integer(required=True)
+    communication_port_2_bit_control = marshmallow.fields.Integer(required=True)
+    gas_day_hour = marshmallow.fields.Integer(required=True)
+    fixed_barometric_pressure = marshmallow.fields.Float(required=True, as_string=True)
+    altitude = marshmallow.fields.Float(required=True, as_string=True)
+    status_archive_record_length = marshmallow.fields.Integer(required=True)
+    pressure_unit_type = marshmallow.fields.Integer(required=True)
+    pressure_unit_text = marshmallow.fields.String(required=True)
+    temperature_unit_type = marshmallow.fields.Integer(required=True)
+    temperature_unit_text = marshmallow.fields.String(required=True)
+    altitude_unit_type = marshmallow.fields.Integer(required=True)
+    altitude_unit_text = marshmallow.fields.String(required=True)
+    gross_calorific_value_type = marshmallow.fields.Integer(required=True)
+    gross_calorific_value_text = marshmallow.fields.String(required=True)
+    dst_region = marshmallow.fields.Integer(required=True)
+    gmt_hour_shift = marshmallow.fields.Integer(required=True)
+    billing_archive_record_length = marshmallow.fields.Integer(required=True)
+    conditions_for_combustion_heat = marshmallow.fields.Integer(required=True)
+    device_variant = marshmallow.fields.Integer(required=True)
+    bit_control = marshmallow.fields.Integer(required=True)
+    places_for_corrected_volume_counters = marshmallow.fields.Integer(required=True)
+    device_features_bits = marshmallow.fields.Integer(required=True)
+    device_features = marshmallow.fields.String(required=True)
+    version_metrological_part = marshmallow.fields.String(required=True)
+    metrological_crc = marshmallow.fields.Integer(required=True)
+    metrological_crc_32 = marshmallow.fields.Integer(required=True)
+    application_crc_32 = marshmallow.fields.Integer(required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return SystemParameters(**data)
