@@ -1,6 +1,8 @@
 from typing import ClassVar, Optional
 
 import attr
+import marshmallow
+from marshmallow import post_load
 
 from elgas.parameters.enumerations import ParameterObjectType
 from elgas.utils import pop_many, pretty_text
@@ -77,3 +79,37 @@ class CompressibilityZBase(Compressibility):
         ParameterObjectType
     ] = ParameterObjectType.COMPRESSIBILITY_Z_BASE
     value_length: ClassVar[int] = 4
+
+
+class CompressibilitySchema(marshmallow.Schema):
+
+    number = marshmallow.fields.Integer(required=True)
+    id = marshmallow.fields.Integer(required=True)
+    address_in_actual_values = marshmallow.fields.Integer(required=True)
+    address_in_data_archive_record = marshmallow.fields.Integer(required=True)
+    bit_control = marshmallow.fields.Integer(required=True)
+    in_data_archive = marshmallow.fields.Boolean(required=True)
+    in_daily_archive = marshmallow.fields.Boolean(required=True)
+    in_monthly_archive = marshmallow.fields.Boolean(required=True)
+    is_metrological_quantity = marshmallow.fields.Boolean(required=True)
+    name = marshmallow.fields.String(required=True)
+    number_of_conversion_coefficient = marshmallow.fields.Integer(required=True)
+    address_in_daily_archive_record = marshmallow.fields.Integer(required=True)
+    address_in_monthly_archive_record = marshmallow.fields.Integer(required=True)
+    decimals = marshmallow.fields.Integer(required=True, allow_none=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return Compressibility(**data)
+
+
+class CompressibilityZSchema(CompressibilitySchema):
+    @post_load
+    def make_object(self, data, **kwargs):
+        return CompressibilityZ(**data)
+
+
+class CompressibilityZBaseSchema(CompressibilitySchema):
+    @post_load
+    def make_object(self, data, **kwargs):
+        return CompressibilityZBase(**data)

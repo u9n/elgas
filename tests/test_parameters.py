@@ -69,15 +69,6 @@ def test_parameter_type_30():
     print(analog)
 
 
-def test_analog_to_json():
-    data2 = bytearray(
-        b"\x01\x00\x02\x00\x08\x00\x0c\x00\x9bTemperature t\x00. Vbs\x00}?}\xb0C\x00\x00\x00\x00\x00\x00\x96\x00\x16;\x00\x00H\xc2\x00\x00\xc8\xc1\x00\x00pB\xadTad\xa2\x02\\\x00\x00\x00\x0c\x00\x00\x00\x00A"
-    )
-    analog = elgas.parameters.analog_quantity.AnalogQuantity.from_bytes(data2)
-    json_data = analog.to_json()
-    pprint(json_data)
-
-
 def test_parameter_type_31():
 
     data1 = bytearray(

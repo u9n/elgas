@@ -1,6 +1,7 @@
 from typing import ClassVar, Optional
 
 import attr
+import marshmallow
 
 from elgas.parameters.enumerations import ParameterObjectType
 from elgas.utils import pop_many, pretty_text
@@ -76,3 +77,25 @@ class ErrorStandardCounter:
             address_in_billing_archive_record=address_in_billing_archive_record,
             decimals=decimals,
         )
+
+
+@attr.s(auto_attribs=True)
+class ErrorStandardCounterSchema(marshmallow.Schema):
+
+    number = marshmallow.fields.Integer(required=True)
+    id = marshmallow.fields.Integer(required=True)
+    address_in_actual_values = marshmallow.fields.Integer(required=True)
+    address_in_data_archive_record = marshmallow.fields.Integer(required=True)
+    bit_control = marshmallow.fields.Integer(required=True)
+    in_data_archive: bool
+    in_daily_archive: bool
+    in_monthly_archive: bool
+    in_factory_archive: bool
+    is_metrological_quantity: bool
+    name: str
+    unit: str
+    number_of_standard_counter = marshmallow.fields.Integer(required=True)
+    address_in_daily_archive_record = marshmallow.fields.Integer(required=True)
+    address_in_monthly_archive_record = marshmallow.fields.Integer(required=True)
+    address_in_billing_archive_record = marshmallow.fields.Integer(required=True)
+    decimals = marshmallow.fields.Integer(required=True, allow_none=True)

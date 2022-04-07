@@ -1,5 +1,5 @@
 import datetime
-from typing import Any
+from typing import *
 
 import attr
 import structlog
@@ -18,6 +18,7 @@ class ElgasClient:
     password_id: int
     encryption_key: bytes
     encryption_key_id: int
+    # device_configuration: List[object]
     elgas_connection: connection.ElgasConnection = attr.ib(
         default=attr.Factory(
             lambda self: connection.ElgasConnection(

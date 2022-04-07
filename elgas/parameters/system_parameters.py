@@ -22,13 +22,13 @@ class SystemParameters:
     serial_number: int
     firmware_version: str  # TODO: Length 5
     service_version: int  # Used in how to parse the object.
-    certification_variant: CertificationVariant
+    certification_variant: int
     station_id: str  # TODO: Lenght 17
     password_for_full_access_active: bool
     password_for_reading_is_on: bool
     metrological_switch: bool
     user_switch: bool
-    switch_function: SwitchFunction
+    switch_function: int
     parameter_crc: bytes  # to check if parameters have been changed from a previous read.
     measuring_period: int  # seconds
     archive_period: int  # seconds
@@ -91,14 +91,14 @@ class SystemParameters:
         serial_number = int.from_bytes(pop_many(data, 4), "little")
         firmware_version = pretty_text(pop_many(data, 5))
         service_version = data.pop(0)
-        certification_variant = CertificationVariant(data.pop(0))
+        certification_variant = data.pop(0)
         station_id = pretty_text(pop_many(data, 17))
         data_access = data.pop(0)
         password_for_full_access_active = bool(data_access & 0b00000001)
         password_for_reading_is_on = bool(data_access & 0b00000010)
         metrological_switch = bool(data_access & 0b00000100)
         user_switch = bool(data_access & 0b00001000)
-        switch_function = SwitchFunction(int((data_access & 0b00110000) >> 4))
+        switch_function = int((data_access & 0b00110000) >> 4)
         parameter_crc = pop_many(data, 2)
         measuring_period = data.pop(0)
         archiving_period = int.from_bytes(pop_many(data, 2), "little")

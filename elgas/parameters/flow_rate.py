@@ -1,6 +1,8 @@
 from typing import ClassVar, Optional
 
 import attr
+import marshmallow
+from marshmallow import post_load
 
 from elgas.parameters.enumerations import ParameterObjectType
 from elgas.utils import pop_many, pretty_text
@@ -77,6 +79,32 @@ class FlowRate:
         )
 
 
+class FlowRateSchema(marshmallow.Schema):
+
+    number = marshmallow.fields.Integer(required=True)
+    id = marshmallow.fields.Integer(required=True)
+    address_in_actual_values = marshmallow.fields.Integer(required=True)
+    address_in_data_archive_record = marshmallow.fields.Integer(required=True)
+    bit_control = marshmallow.fields.Integer(required=True)
+    in_data_archive = marshmallow.fields.Integer(required=True)
+    in_daily_archive = marshmallow.fields.Integer(required=True)
+    in_monthly_archive = marshmallow.fields.Integer(required=True)
+    is_metrological_quantity = marshmallow.fields.Integer(required=True)
+    name = marshmallow.fields.String(required=True)
+    unit = marshmallow.fields.String(required=True)
+
+    error_bit_order_in_actual_values = marshmallow.fields.Integer(required=True)
+    error_bit_order_in_binary_archive = marshmallow.fields.Integer(required=True)
+    error_bit_order_in_data_archive = marshmallow.fields.Integer(required=True)
+    address_in_daily_archive_record = marshmallow.fields.Integer(required=True)
+    address_in_monthly_archive_record = marshmallow.fields.Integer(required=True)
+    decimals = marshmallow.fields.Integer(required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return FlowRate(**data)
+
+
 @attr.s(auto_attribs=True)
 class StandardFlowRate:
     object_type: ClassVar[ParameterObjectType] = ParameterObjectType.STANDARD_FLOW_RATE
@@ -87,10 +115,10 @@ class StandardFlowRate:
     address_in_actual_values: int
     address_in_data_archive_record: int
     bit_control: int
-    in_data_archive: int
-    in_daily_archive: int
-    in_monthly_archive: int
-    is_metrological_quantity: int
+    in_data_archive: bool
+    in_daily_archive: bool
+    in_monthly_archive: bool
+    is_metrological_quantity: bool
     name: str
     unit: str
     number_of_primary_flow_rate: int
@@ -142,3 +170,27 @@ class StandardFlowRate:
             address_in_monthly_archive_record=address_in_monthly_archive_record,
             decimals=decimals,
         )
+
+
+class StandardFlowRateSchema(marshmallow.Schema):
+
+    number = marshmallow.fields.Integer(required=True)
+    id = marshmallow.fields.Integer(required=True)
+    address_in_actual_values = marshmallow.fields.Integer(required=True)
+    address_in_data_archive_record = marshmallow.fields.Integer(required=True)
+    bit_control = marshmallow.fields.Integer(required=True)
+    in_data_archive = marshmallow.fields.Boolean(required=True)
+    in_daily_archive = marshmallow.fields.Boolean(required=True)
+    in_monthly_archive = marshmallow.fields.Boolean(required=True)
+    is_metrological_quantity = marshmallow.fields.Boolean(required=True)
+    name = marshmallow.fields.String(required=True)
+    unit = marshmallow.fields.String(required=True)
+    number_of_primary_flow_rate = marshmallow.fields.Integer(required=True)
+    number_of_conversion = marshmallow.fields.Integer(required=True)
+    address_in_daily_archive_record = marshmallow.fields.Integer(required=True)
+    address_in_monthly_archive_record = marshmallow.fields.Integer(required=True)
+    decimals = marshmallow.fields.Integer(required=True, allow_none=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return StandardFlowRate(**data)

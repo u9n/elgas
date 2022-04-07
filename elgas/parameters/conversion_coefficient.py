@@ -2,6 +2,8 @@ import struct
 from typing import ClassVar, Optional
 
 import attr
+import marshmallow
+from marshmallow import post_load
 
 from elgas.parameters.enumerations import ParameterObjectType
 from elgas.utils import pop_many, pretty_text
@@ -19,10 +21,10 @@ class ConversionCoefficient:
     address_in_actual_values: int
     address_in_data_archive_record: int
     bit_control: int
-    in_data_archive: int
-    in_daily_archive: int
-    in_monthly_archive: int
-    is_metrological_quantity: int
+    in_data_archive: bool
+    in_daily_archive: bool
+    in_monthly_archive: bool
+    is_metrological_quantity: bool
     name: str
 
     number_of_analog_pressure: int
@@ -83,3 +85,33 @@ class ConversionCoefficient:
             address_in_monthly_archive_record=address_in_monthly_archive_record,
             decimals=decimals,
         )
+
+
+class ConversionCoefficientSchema(marshmallow.Schema):
+
+    number = marshmallow.fields.Integer(required=True)
+    id = marshmallow.fields.Integer(required=True)
+    address_in_actual_values = marshmallow.fields.Integer(required=True)
+    address_in_data_archive_record = marshmallow.fields.Integer(required=True)
+    bit_control = marshmallow.fields.Integer(required=True)
+    in_data_archive = marshmallow.fields.Boolean(required=True)
+    in_daily_archive = marshmallow.fields.Boolean(required=True)
+    in_monthly_archive = marshmallow.fields.Boolean(required=True)
+    is_metrological_quantity = marshmallow.fields.Boolean(required=True)
+    name = marshmallow.fields.String(required=True)
+
+    number_of_analog_pressure = marshmallow.fields.Integer(required=True)
+    number_of_analog_temperature = marshmallow.fields.Integer(required=True)
+    compressibility_calculation_method = marshmallow.fields.Integer(required=True)
+    default_value_pressure = marshmallow.fields.Float(required=True, as_string=True)
+    default_value_temperature = marshmallow.fields.Float(required=True, as_string=True)
+    alternate_value_of_compressibility = marshmallow.fields.Float(
+        required=True, as_string=True
+    )
+    address_in_daily_archive_record = marshmallow.fields.Integer(required=True)
+    address_in_monthly_archive_record = marshmallow.fields.Integer(required=True)
+    decimals = marshmallow.fields.Integer(required=True, allow_none=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return ConversionCoefficient(**data)

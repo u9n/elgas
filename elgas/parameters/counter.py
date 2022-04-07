@@ -2,6 +2,8 @@ import struct
 from typing import ClassVar, Optional
 
 import attr
+import marshmallow
+from marshmallow import post_load
 
 from elgas.parameters.enumerations import ParameterObjectType
 from elgas.utils import pop_many, pretty_text
@@ -99,3 +101,42 @@ class Counter:
 class DoubleCounter(Counter):
     object_type: ClassVar[ParameterObjectType] = ParameterObjectType.DOUBLE_COUNTER
     value_length: ClassVar[int] = 8  # double
+
+
+class CounterSchema(marshmallow.Schema):
+
+    number = marshmallow.fields.Integer(required=True)
+    id = marshmallow.fields.Integer(required=True)
+    address_in_actual_values = marshmallow.fields.Integer(required=True)
+    address_in_data_archive_record = marshmallow.fields.Integer(required=True)
+    bit_control = marshmallow.fields.Integer(required=True)
+    in_data_archive = marshmallow.fields.Boolean(required=True)
+    in_daily_archive = marshmallow.fields.Boolean(required=True)
+    in_monthly_archive = marshmallow.fields.Boolean(required=True)
+    in_factory_archive = marshmallow.fields.Boolean(required=True)
+    is_metrological_quantity = marshmallow.fields.Boolean(required=True)
+    accept_counting_direction = marshmallow.fields.Boolean(required=True)
+    name = marshmallow.fields.String(required=True)
+    unit = marshmallow.fields.String(required=True)
+    digit = marshmallow.fields.Float(required=True, as_string=True)
+    serial_number_of_gas_meter = marshmallow.fields.Integer(required=True)
+
+    error_bit_order_in_actual_values = marshmallow.fields.Integer(required=True)
+    error_bit_order_in_binary_archive = marshmallow.fields.Integer(required=True)
+    error_bit_order_in_data_archive = marshmallow.fields.Integer(required=True)
+    address_in_daily_archive_record = marshmallow.fields.Integer(required=True)
+    address_in_monthly_archive_record = marshmallow.fields.Integer(required=True)
+    address_in_billing_archive_record = marshmallow.fields.Integer(required=True)
+    serial_number_of_gas_meter_text = marshmallow.fields.String(required=True)
+
+    decimals = marshmallow.fields.Integer(required=True, allow_none=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return Counter(**data)
+
+
+class DoubleCounterSchema(CounterSchema):
+    @post_load
+    def make_object(self, data, **kwargs):
+        return DoubleCounter(**data)

@@ -3,38 +3,16 @@ from typing import ClassVar, Optional
 
 import attr
 import marshmallow
+from marshmallow import post_load
 
 from elgas.parameters.enumerations import ParameterObjectType
 from elgas.utils import pop_many, pretty_text
-
-
-class AnalogQuantitySchema(marshmallow.Schema):
-    number = marshmallow.fields.Integer(required=True)
-    id = marshmallow.fields.Integer(required=True)
-    address_in_actual_values = marshmallow.fields.Integer(required=True)
-    address_in_data_archive_record = marshmallow.fields.Integer(required=True)
-    bit_control = marshmallow.fields.Integer(required=True)
-    name = marshmallow.fields.String(required=True)
-    unit = marshmallow.fields.String(required=True)
-    digit = marshmallow.fields.Number(required=True)
-    offset = marshmallow.fields.Number(required=True)
-    lower_limit_measuring_range = marshmallow.fields.Number(required=True)
-    upper_limit_measuring_range = marshmallow.fields.Number(required=True)
-    serial_number_transducer = marshmallow.fields.Integer(required=True)
-    error_bit_order_in_actual_values = marshmallow.fields.Integer(required=True)
-    error_bit_order_in_binary_archive = marshmallow.fields.Integer(required=True)
-    error_bit_order_in_data_archive = marshmallow.fields.Integer(required=True)
-    address_in_daily_archive_record = marshmallow.fields.Integer(required=True)
-    address_in_monthly_archive_record = marshmallow.fields.Integer(required=True)
-    samples_in_fast_archive = marshmallow.fields.Integer(required=True)
-    decimals = marshmallow.fields.Integer(required=True, allow_none=True)
 
 
 @attr.s(auto_attribs=True)
 class AnalogQuantity:
     object_type: ClassVar[ParameterObjectType] = ParameterObjectType.ANALOG_MEASURAND
     value_length: ClassVar[int] = 2
-    schema: ClassVar[marshmallow.Schema] = AnalogQuantitySchema()
 
     number: int
     id: int
@@ -125,9 +103,34 @@ class AnalogQuantity:
             decimals=decimals,
         )
 
-    def to_json(self):
-        return self.schema.dumps(self)
 
-    @classmethod
-    def from_json(cls, json_data: str):
-        return cls(**cls.schema.loads(json_data))
+class AnalogQuantitySchema(marshmallow.Schema):
+    number = marshmallow.fields.Integer(required=True)
+    id = marshmallow.fields.Integer(required=True)
+    address_in_actual_values = marshmallow.fields.Integer(required=True)
+    address_in_data_archive_record = marshmallow.fields.Integer(required=True)
+    bit_control = marshmallow.fields.Integer(required=True)
+    in_data_archive = marshmallow.fields.Boolean(required=True)
+    in_daily_archive = marshmallow.fields.Boolean(required=True)
+    in_monthly_archive = marshmallow.fields.Boolean(required=True)
+    is_metrological_quantity = marshmallow.fields.Boolean(required=True)
+    in_fast_archive_1 = marshmallow.fields.Boolean(required=True)
+    in_fast_archvie_2 = marshmallow.fields.Boolean(required=True)
+    name = marshmallow.fields.String(required=True)
+    unit = marshmallow.fields.String(required=True)
+    digit = marshmallow.fields.Number(required=True)
+    offset = marshmallow.fields.Number(required=True)
+    lower_limit_measuring_range = marshmallow.fields.Number(required=True)
+    upper_limit_measuring_range = marshmallow.fields.Number(required=True)
+    serial_number_transducer = marshmallow.fields.Integer(required=True)
+    error_bit_order_in_actual_values = marshmallow.fields.Integer(required=True)
+    error_bit_order_in_binary_archive = marshmallow.fields.Integer(required=True)
+    error_bit_order_in_data_archive = marshmallow.fields.Integer(required=True)
+    address_in_daily_archive_record = marshmallow.fields.Integer(required=True)
+    address_in_monthly_archive_record = marshmallow.fields.Integer(required=True)
+    samples_in_fast_archive = marshmallow.fields.Integer(required=True)
+    decimals = marshmallow.fields.Integer(required=True, allow_none=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return AnalogQuantity(**data)

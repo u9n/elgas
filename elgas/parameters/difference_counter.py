@@ -2,6 +2,8 @@ import struct
 from typing import ClassVar, Optional
 
 import attr
+import marshmallow
+from marshmallow import post_load
 
 from elgas.parameters.enumerations import ParameterObjectType
 from elgas.utils import pop_many, pretty_text
@@ -86,3 +88,35 @@ class DifferenceBaseCounter:
         ParameterObjectType
     ] = ParameterObjectType.DIFFERENCE_BASE_COUNTER
     value_length: ClassVar[int] = 8
+
+
+class DifferenceCounterSchema(marshmallow.Schema):
+
+    number = marshmallow.fields.Integer(required=True)
+    id = marshmallow.fields.Integer(required=True)
+    address_in_actual_values = marshmallow.fields.Integer(required=True)
+    address_in_data_archive_record = marshmallow.fields.Integer(required=True)
+    bit_control = marshmallow.fields.Integer(required=True)
+    in_data_archive = marshmallow.fields.Boolean(required=True)
+    in_daily_archive = marshmallow.fields.Boolean(required=True)
+    in_monthly_archive = marshmallow.fields.Boolean(required=True)
+    is_double = marshmallow.fields.Boolean(required=True)
+    is_metrological_quantity = marshmallow.fields.Boolean(required=True)
+    name = marshmallow.fields.String(required=True)
+    unit = marshmallow.fields.String(required=True)
+    digit = marshmallow.fields.Float(required=True, as_string=True)
+    number_of_primary_counter = marshmallow.fields.Integer(required=True)
+    address_in_daily_archive_record = marshmallow.fields.Integer(required=True)
+    address_in_monthly_archive_record = marshmallow.fields.Integer(required=True)
+    address_in_billing_archive_record = marshmallow.fields.Integer(required=True)
+    decimals = marshmallow.fields.Integer(required=True, allow_none=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return DifferenceCounter(**data)
+
+
+class DifferenceBaseCounterSchema(DifferenceCounterSchema):
+    @post_load
+    def make_object(self, data, **kwargs):
+        return DifferenceBaseCounter(**data)

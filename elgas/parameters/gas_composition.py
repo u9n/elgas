@@ -1,6 +1,8 @@
 import struct
 
 import attr
+import marshmallow
+from marshmallow import post_load
 
 from elgas.utils import pop_many
 
@@ -60,3 +62,34 @@ class GasComposition:
             c9h20=struct.unpack("<f", pop_many(data, 4))[0],
             c10h22=struct.unpack("<f", pop_many(data, 4))[0],
         )
+
+
+class GasCompositionSchema(marshmallow.Schema):
+
+    co = marshmallow.fields.Float(required=True, as_string=True)
+    n2 = marshmallow.fields.Float(required=True, as_string=True)
+    combustion_heat = marshmallow.fields.Float(required=True, as_string=True)
+    relative_density = marshmallow.fields.Float(required=True, as_string=True)
+    h2 = marshmallow.fields.Float(required=True, as_string=True)
+    h2s = marshmallow.fields.Float(required=True, as_string=True)
+    he = marshmallow.fields.Float(required=True, as_string=True)
+    h2o = marshmallow.fields.Float(required=True, as_string=True)
+    o2 = marshmallow.fields.Float(required=True, as_string=True)
+    ar = marshmallow.fields.Float(required=True, as_string=True)
+    co = marshmallow.fields.Float(required=True, as_string=True)
+    c1h4 = marshmallow.fields.Float(required=True, as_string=True)
+    c2h6 = marshmallow.fields.Float(required=True, as_string=True)
+    c3h8 = marshmallow.fields.Float(required=True, as_string=True)
+    ic4h10 = marshmallow.fields.Float(required=True, as_string=True)
+    nc4h10 = marshmallow.fields.Float(required=True, as_string=True)
+    ic5h12 = marshmallow.fields.Float(required=True, as_string=True)
+    nc5h12 = marshmallow.fields.Float(required=True, as_string=True)
+    c6h14 = marshmallow.fields.Float(required=True, as_string=True)
+    c7h16 = marshmallow.fields.Float(required=True, as_string=True)
+    c8h18 = marshmallow.fields.Float(required=True, as_string=True)
+    c9h20 = marshmallow.fields.Float(required=True, as_string=True)
+    c10h22 = marshmallow.fields.Float(required=True, as_string=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return GasComposition(**data)
