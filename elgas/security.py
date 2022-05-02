@@ -71,22 +71,15 @@ class CipherContext:
     def decrypt(self, in_data: bytes):
         header = in_data[:3]
         encrypted = in_data[3:]
-        print(f"encrypted: {encrypted.hex()!r}")
         original_length = int.from_bytes(header[:2], "little")
         key_id = header[2]
         assert key_id == self.key_id
         decrypted_data = decrypt(encrypted, self.key, self.key)
-        print(f"decrypted: {decrypted_data.hex()!r}")
         crc = decrypted_data[-2:]
-        print(f"correct crc:{crc.hex()!r}")
         for_crc = bytearray()
         for_crc.extend(original_length.to_bytes(2, "little"))
         for_crc.append(key_id)
         for_crc.extend(decrypted_data[:-2])
-        print(f"for crc: {for_crc.hex()!r}")
-        print(
-            f"calculated crc: {utils.calculate_crc(for_crc).to_bytes(2, 'little').hex()}"
-        )
         crc = utils.calculate_crc(for_crc).to_bytes(2, "big")
         correct_crc = decrypted_data[-2:]
         if not crc == correct_crc:

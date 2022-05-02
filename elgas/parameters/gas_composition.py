@@ -66,7 +66,7 @@ class GasComposition:
 
 class GasCompositionSchema(marshmallow.Schema):
 
-    co = marshmallow.fields.Float(required=True, as_string=True)
+    co2 = marshmallow.fields.Float(required=True, as_string=True)
     n2 = marshmallow.fields.Float(required=True, as_string=True)
     combustion_heat = marshmallow.fields.Float(required=True, as_string=True)
     relative_density = marshmallow.fields.Float(required=True, as_string=True)

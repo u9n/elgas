@@ -21,6 +21,8 @@ class ResponsePduFactory:
         constants.ServiceNumber.READ_DEVICE_TIME: application.ReadTimeResponse,
         constants.ServiceNumber.READ_SCADA_PARAMETERS: application.ReadDeviceParametersResponse,
         constants.ServiceNumber.READ_ARCHIVES_BY_DATE: application.ReadArchiveByTimeResponse,
+        constants.ServiceNumber.READ_ARCHIVES: application.ReadArchiveResponse,
+        constants.ServiceNumber.WRITE_DEVICE_TIME: application.WriteTimeResponse,
     }
 
     @staticmethod
@@ -123,6 +125,13 @@ class ElgasConnection:
         After this you could call next_event
         """
         if data:
+            if data == b"\x0d" and len(self.buffer) == 0:
+                LOG.info(
+                    "Received an end char when read buffer was empty. This is a"
+                    " known issue and data is ignored."
+                )
+                return
+
             self.buffer += data
             LOG.debug(
                 f"Added data to connection buffer", data=data, total_buffer=self.buffer
@@ -155,8 +164,7 @@ class ElgasConnection:
                 response.data = self.cipher_context.decrypt(response.data)
                 LOG.debug("Decrypted ELGAS response", decrypted=response)
 
-        except ValueError as e:
-            LOG.exception(e)
+        except ValueError:
             LOG.debug("Cannot interpret data as frame. Need more data")
             return state.NEED_DATA
 

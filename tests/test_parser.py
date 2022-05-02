@@ -64,5 +64,3 @@ def test_make_value_parsers():
     number = struct.unpack("<d", data)[0]
     print(info)
     print(number)
-
-    assert False

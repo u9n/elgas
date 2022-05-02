@@ -41,7 +41,6 @@ def test_parameter_0():
     )
 
     print(system_parameters)
-    assert False
 
 
 def test_parameter_type_30():

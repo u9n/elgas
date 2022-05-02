@@ -96,7 +96,7 @@ class Response:
         length = int.from_bytes(in_bytes[4:6], "little")
         if length != len(in_bytes) - 1:  # STX is not counted
             raise ValueError(
-                f"Length field does not correspond to length of data. Got {length}, should be {len(in_bytes)-1} "
+                f"Length field does not correspond to length of data. Got {len(in_bytes)-1}, should be {length} "
             )
         destination_address_1 = int.from_bytes(in_bytes[6:8], "little")
         destination_address_2 = int.from_bytes(in_bytes[8:9], "little")

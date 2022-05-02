@@ -123,7 +123,7 @@ class BlockingTcpTransport:
             raise RuntimeError("TCP transport not connected.")
         try:
             self.tcp_socket.sendall(data)
-            LOG.debug(f"Sent data", data=data.hex(), transport=self)
+            LOG.debug(f"Sent data", data=data, transport=self)
         except (OSError, IOError, socket.timeout, socket.error) as e:
             raise exceptions.CommunicationError("Could no send data") from e
 
@@ -131,14 +131,14 @@ class BlockingTcpTransport:
         """"""
         try:
             data = self.recv_until()
-            LOG.debug("Revecied data", data=data.hex(), transport=self)
+            LOG.debug("Received data", data=data, transport=self)
         except (OSError, IOError, socket.timeout, socket.error) as e:
             raise exceptions.CommunicationError("Could not receive data") from e
         return data
 
     def _recv_bytes(self, amount: int):
         """
-        Some implementations will return partial data and we need to keep on trying
+        Some implementations will return partial data, and we need to keep on trying
         to read the bytes until we have them all.
         """
         if not self.tcp_socket:
@@ -152,7 +152,7 @@ class BlockingTcpTransport:
 
     def recv_until(self, expected=b"\x0d", size=None):
         """\
-        Read until an expected sequence is found ('\n' by default), the size
+        Read until an expected sequence is found ('\r' by default), the size
         is exceeded or until timeout occurs.
         """
         lenterm = len(expected)

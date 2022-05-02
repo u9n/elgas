@@ -4,7 +4,7 @@ from typing import *
 import attr
 import structlog
 
-from elgas import application, connection, constants, parser, state, transport
+from elgas import application, connection, constants, parser, state, transport, utils
 
 LOG = structlog.get_logger("client")
 
@@ -14,9 +14,9 @@ class ElgasClient:
     """Elgas client"""
 
     transport: transport.ElgasTransport
-    password: str
+    password: str = attr.ib(converter=utils.to_secret_str)
     password_id: int
-    encryption_key: bytes
+    encryption_key: bytes = attr.ib(converter=utils.to_secret_byte)
     encryption_key_id: int
     # device_configuration: List[object]
     elgas_connection: connection.ElgasConnection = attr.ib(
@@ -56,20 +56,33 @@ class ElgasClient:
                 continue
             return event
 
-    def read_values(self):
-        request = application.ReadActualValuesRequest(password=self.password)
+    def read_instantaneous_values(self) -> application.ReadInstantaneousValuesResponse:
+        LOG.info("Reading instantaneous values")
+        request = application.ReadInstantaneousValuesRequest(password=self.password)
         self.send(request)
-        response = self.next_event()
-        LOG.info(response)
+        response: application.ReadInstantaneousValuesResponse = self.next_event()
+        LOG.info("Received instantaneous values")
+        return response
 
     def read_time(self):
+        LOG.info("Reading device time")
         request = application.ReadTimeRequest()
         self.send(request)
         response: application.ReadTimeResponse = self.next_event()
-        LOG.info(response)
         LOG.info("Got device time", time=response.time.isoformat())
+        return response.time
 
-    def read_parameters(self, read_from: int = 0):
+    def write_time(self, device_time: datetime):
+        LOG.info("Writing time to device", time=device_time.isoformat())
+        request = application.WriteTimeRequest(
+            password=self.password, device_time=device_time
+        )
+        self.send(request)
+        self.next_event()
+        LOG.info("Finished writing time to device")
+
+    def read_parameters(self, read_from: int = 0) -> List[Any]:
+        LOG.info(f"Reading device parameters", read_from=read_from)
         should_stop = False
         total_parameter_data = b""
         object_count = read_from
@@ -87,19 +100,32 @@ class ElgasClient:
             if not should_stop:
                 LOG.info("More parameters available", next_object_count=object_count)
 
-        LOG.debug("Received total data", data=total_parameter_data)
+        LOG.debug("Received total parameters data", data=total_parameter_data)
         parsed = parser.ScadaParameterParser().parse(total_parameter_data)
         return parsed
 
-    def read_archive_by_time(self):
-        request = application.ReadArchiveByTimeRequest(
+    def read_archive(
+        self, archive: constants.Archive, amount: int, oldest_record_id: int
+    ):
+        request = application.ReadArchiveRequest(
             password=self.password,
-            archive=constants.Archive.DATA,
-            amount=1,
-            last_date=datetime.datetime.now() - datetime.timedelta(days=1),
+            archive=archive,
+            amount=amount,
+            oldest_record_id=oldest_record_id,
         )
         self.send(request)
         response = self.next_event()
-        # TODO: How do we initial to recieve all the other data?
-        LOG.info(response)
-        LOG.info("Record data", data=response.data.hex())
+        return response
+
+    def read_archive_by_time(
+        self, archive: constants.Archive, amount: int, oldest_timestamp: datetime
+    ):
+        request = application.ReadArchiveByTimeRequest(
+            password=self.password,
+            archive=archive,
+            amount=amount,
+            oldest_timestamp=oldest_timestamp,
+        )
+        self.send(request)
+        response = self.next_event()
+        return response

@@ -121,3 +121,9 @@ def test_pad_password():
 @pytest.mark.parametrize(("input", "output"), [(b"MJ/m3\x003\x00", "MJ/m3 3")])
 def test_pretty_text(input: bytes, output: str):
     assert utils.pretty_text(input) == output
+
+
+def test_return_characters_2():
+    data = b"\x1b\x1b\x0e"
+    out = utils.return_characters(data)
+    assert out == b"\x1b\x0e"

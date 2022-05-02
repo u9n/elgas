@@ -2,43 +2,81 @@ from typing import ClassVar, Dict, Type
 
 import attr
 
-from elgas.parameters.analog_quantity import AnalogQuantity
-from elgas.parameters.binary import Binary
+from elgas.parameters.analog_quantity import AnalogQuantity, AnalogQuantitySchema
+from elgas.parameters.binary import Binary, BinarySchema
 from elgas.parameters.compressibility import (
     Compressibility,
+    CompressibilitySchema,
     CompressibilityZ,
     CompressibilityZBase,
+    CompressibilityZBaseSchema,
+    CompressibilityZSchema,
 )
-from elgas.parameters.conversion_coefficient import ConversionCoefficient
-from elgas.parameters.counter import Counter, DoubleCounter
-from elgas.parameters.device_error import DeviceError
-from elgas.parameters.diagnostics import Diagnostics
-from elgas.parameters.difference_counter import DifferenceBaseCounter, DifferenceCounter
-from elgas.parameters.energy import Energy, ErrorEnergy
+from elgas.parameters.conversion_coefficient import (
+    ConversionCoefficient,
+    ConversionCoefficientSchema,
+)
+from elgas.parameters.counter import (
+    Counter,
+    CounterSchema,
+    DoubleCounter,
+    DoubleCounterSchema,
+)
+from elgas.parameters.device_error import DeviceError, DeviceErrorSchema
+from elgas.parameters.diagnostics import Diagnostics, DiagnosticsSchema
+from elgas.parameters.difference_counter import (
+    DifferenceBaseCounter,
+    DifferenceBaseCounterSchema,
+    DifferenceCounter,
+    DifferenceCounterSchema,
+)
+from elgas.parameters.energy import Energy, EnergySchema, ErrorEnergy, ErrorEnergySchema
 from elgas.parameters.enumerations import ParameterObjectType
-from elgas.parameters.error_counter import DoubleErrorCounter, ErrorCounter
-from elgas.parameters.error_standard_counter import ErrorStandardCounter
-from elgas.parameters.flow_rate import FlowRate, StandardFlowRate
-from elgas.parameters.modem import Modem
-from elgas.parameters.setpoint import SetPoint
-from elgas.parameters.standard_counter import StandardCounter
+from elgas.parameters.error_counter import (
+    DoubleErrorCounter,
+    DoubleErrorCounterSchema,
+    ErrorCounter,
+    ErrorCounterSchema,
+)
+from elgas.parameters.error_standard_counter import (
+    ErrorStandardCounter,
+    ErrorStandardCounterSchema,
+)
+from elgas.parameters.flow_rate import (
+    FlowRate,
+    FlowRateSchema,
+    StandardFlowRate,
+    StandardFlowRateSchema,
+)
+from elgas.parameters.modem import Modem, ModemSchema
+from elgas.parameters.setpoint import SetPoint, SetPointSchema
+from elgas.parameters.standard_counter import StandardCounter, StandardCounterSchema
 from elgas.parameters.statistics import (
     AnalogStatistics,
+    AnalogStatisticsSchema,
     AnalogTimeStatistics,
+    AnalogTimeStatisticsSchema,
     CounterStatistics,
+    CounterStatisticsSchema,
     StandardCounterStatistics,
+    StandardCounterStatisticsSchema,
     Statistics,
+    StatisticsSchema,
     TimeStatistics,
+    TimeStatisticsSchema,
 )
-from elgas.parameters.sum_of_alarms import SumOfAlarms
-from elgas.parameters.system_parameters import SystemParameters
+from elgas.parameters.sum_of_alarms import SumOfAlarms, SumOfAlarmsSchema
+from elgas.parameters.system_parameters import SystemParameters, SystemParametersSchema
 from elgas.parameters.tariff_counter import (
     BaseTariffCounter,
+    BaseTariffCounterSchema,
     DoubleTariffCounter,
+    DoubleTariffCounterSchema,
     TariffCounter,
+    TariffCounterSchema,
 )
-from elgas.parameters.time_window import TimeWindow
-from elgas.parameters.timer import Timer
+from elgas.parameters.time_window import TimeWindow, TimeWindowSchema
+from elgas.parameters.timer import Timer, TimerSchema
 
 
 @attr.s(auto_attribs=True)
@@ -87,7 +125,48 @@ class ParameterFactory:
         klass = ParameterFactory.object_map[object_type]
         return klass.from_bytes(in_data)
 
+
+@attr.s(auto_attribs=True)
+class ParameterSchemaFactory:
+
+    object_map: ClassVar[Dict[ParameterObjectType, Type]] = {
+        ParameterObjectType.SYSTEM_PARAMETER: SystemParametersSchema,
+        ParameterObjectType.ANALOG_MEASURAND: AnalogQuantitySchema,
+        ParameterObjectType.BINARY: BinarySchema,
+        ParameterObjectType.COUNTER: CounterSchema,
+        ParameterObjectType.STANDARD_COUNTER: StandardCounterSchema,
+        ParameterObjectType.FLOW_RATE: FlowRateSchema,
+        ParameterObjectType.STANDARD_FLOW_RATE: StandardFlowRateSchema,
+        ParameterObjectType.CONVERSION_COEFFICIENT: ConversionCoefficientSchema,
+        ParameterObjectType.ERROR_COUNTER: ErrorCounterSchema,
+        ParameterObjectType.ERROR_STANDARD_COUNTER: ErrorStandardCounterSchema,
+        ParameterObjectType.COMPRESSIBILITY: CompressibilitySchema,
+        ParameterObjectType.TIME_WINDOW: TimeWindowSchema,
+        ParameterObjectType.DOUBLE_COUNTER: DoubleCounterSchema,
+        ParameterObjectType.DOUBLE_ERROR_COUNTER: DoubleErrorCounterSchema,
+        ParameterObjectType.DIAGNOSTICS: DiagnosticsSchema,
+        ParameterObjectType.SET_POINT: SetPointSchema,
+        ParameterObjectType.COMPRESSIBILITY_Z: CompressibilityZSchema,
+        ParameterObjectType.COMPRESSIBILITY_Z_BASE: CompressibilityZBaseSchema,
+        ParameterObjectType.ENERGY: EnergySchema,
+        ParameterObjectType.ERROR_ENERGY: ErrorEnergySchema,
+        ParameterObjectType.TARIFF_COUNTER: TariffCounterSchema,
+        ParameterObjectType.DOUBLE_TARIFF_COUNTER: DoubleTariffCounterSchema,
+        ParameterObjectType.BASE_TARIFF_COUNTER: BaseTariffCounterSchema,
+        ParameterObjectType.DIFFERENCE_COUNTER: DifferenceCounterSchema,
+        ParameterObjectType.DIFFERENCE_BASE_COUNTER: DifferenceBaseCounterSchema,
+        ParameterObjectType.TIMER: TimerSchema,
+        ParameterObjectType.DEVICE_ERROR: DeviceErrorSchema,
+        ParameterObjectType.SUM_OF_ALARMS: SumOfAlarmsSchema,
+        ParameterObjectType.ANALOG_STATISTICS: AnalogStatisticsSchema,
+        ParameterObjectType.STATISTICS: StatisticsSchema,
+        ParameterObjectType.ANALOG_TIME_STATISTICS: AnalogTimeStatisticsSchema,
+        ParameterObjectType.TIME_STATISTICS: TimeStatisticsSchema,
+        ParameterObjectType.COUNTER_STATISTICS: CounterStatisticsSchema,
+        ParameterObjectType.STANDARD_COUNTER_STATISTICS: StandardCounterStatisticsSchema,
+        ParameterObjectType.MODEM: ModemSchema,
+    }
+
     @staticmethod
-    def from_json(object_type: ParameterObjectType, json_data: str):
-        klass = ParameterFactory.object_map[object_type]
-        return klass.from_json(json_data)
+    def by_parameter_id(parameter_id: ParameterObjectType):
+        return ParameterSchemaFactory.object_map[parameter_id]

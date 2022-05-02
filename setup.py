@@ -33,7 +33,7 @@ EXTRAS = {
 CLASSIFIERS = [
     "Intended Audience :: Developers",
     "Natural Language :: English",
-    "License :: Free for non-commercial use",
+    "License :: BUSL-1.1",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.6",

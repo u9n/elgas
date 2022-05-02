@@ -22,7 +22,7 @@ class Archive(IntEnum):
 
 
 @attr.s(auto_attribs=True)
-class ReadActualValuesRequest:
+class ReadInstantaneousValuesRequest:
     """
     Will request a readout of all current parameters in the device
     """
@@ -126,6 +126,45 @@ class ReadTimeResponse:
 
 
 @attr.s(auto_attribs=True)
+class WriteTimeRequest:
+    """
+    Request for the device's time. It contains no data.
+    """
+
+    service: ClassVar[
+        constants.ServiceNumber
+    ] = constants.ServiceNumber.WRITE_DEVICE_TIME
+
+    password: str
+    device_time: datetime
+
+    def to_bytes(self) -> bytes:
+        out = bytearray()
+        out.extend(utils.pad_password(self.password).encode("latin-1"))
+        out.extend(utils.datetime_to_bytes(self.device_time))
+        out.append(0b00000100)  # Flag to only sync time.
+
+        return bytes(out)
+
+
+@attr.s(auto_attribs=True)
+class WriteTimeResponse:
+    """
+    Contains the device time. Some firmware adds internal data at the end of the
+    message.
+    """
+
+    service: ClassVar[
+        constants.ServiceNumber
+    ] = constants.ServiceNumber.READ_DEVICE_TIME
+
+    @classmethod
+    def from_bytes(cls, in_bytes: bytes):
+
+        return cls()
+
+
+@attr.s(auto_attribs=True)
 class ReadDeviceParametersRequest:
     """"""
 
@@ -184,14 +223,14 @@ class ReadArchiveByTimeRequest:
     password: str  # todo: set max lenght
     archive: constants.Archive
     amount: int
-    last_date: datetime
+    oldest_timestamp: datetime
 
     def to_bytes(self) -> bytes:
         out = bytearray()
         out.extend(utils.pad_password(self.password).encode("latin-1"))
         out.append(self.archive)
         out.extend(self.amount.to_bytes(2, "little"))
-        out.extend(utils.datetime_to_bytes(self.last_date))
+        out.extend(utils.datetime_to_bytes(self.oldest_timestamp))
 
         return bytes(out)
 
@@ -205,16 +244,59 @@ class ReadArchiveByTimeResponse:
     ] = constants.ServiceNumber.READ_ARCHIVES_BY_DATE
 
     archive: constants.Archive
-    first_record_id: int
+    oldest_record_id: int
     data: bytes
 
     @classmethod
     def from_bytes(cls, in_bytes: bytes):
         archive = constants.Archive(in_bytes[0])
-        first_record_id = int.from_bytes(in_bytes[1:4], "little")
+        oldest_record_id = int.from_bytes(in_bytes[1:4], "little")
         data = in_bytes[5:]
         return cls(
             archive=archive,
-            first_record_id=first_record_id,
+            oldest_record_id=oldest_record_id,
+            data=data,
+        )
+
+
+@attr.s(auto_attribs=True)
+class ReadArchiveRequest:
+    """"""
+
+    service: ClassVar[constants.ServiceNumber] = constants.ServiceNumber.READ_ARCHIVES
+
+    password: str  # todo: set max lenght
+    archive: constants.Archive
+    amount: int
+    oldest_record_id: int
+
+    def to_bytes(self) -> bytes:
+        out = bytearray()
+        out.extend(utils.pad_password(self.password).encode("latin-1"))
+        out.append(self.archive)
+        out.extend(self.oldest_record_id.to_bytes(4, "little"))
+        out.extend(self.amount.to_bytes(2, "little"))
+
+        return bytes(out)
+
+
+@attr.s(auto_attribs=True)
+class ReadArchiveResponse:
+    """"""
+
+    service: ClassVar[constants.ServiceNumber] = constants.ServiceNumber.READ_ARCHIVES
+
+    archive: constants.Archive
+    oldest_record_id: int
+    data: bytes
+
+    @classmethod
+    def from_bytes(cls, in_bytes: bytes):
+        archive = constants.Archive(in_bytes[0])
+        oldest_record_id = int.from_bytes(in_bytes[1:4], "little")
+        data = in_bytes[5:]
+        return cls(
+            archive=archive,
+            oldest_record_id=oldest_record_id,
             data=data,
         )

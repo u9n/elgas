@@ -1,3 +1,5 @@
+import datetime
+
 from elgas import application, frames
 from elgas.constants import ServiceNumber
 from elgas.frames import Response
@@ -9,7 +11,6 @@ def test_read_time_response():
     print(response)
     pdu = application.ReadTimeResponse.from_bytes(response.data)
     print(pdu)
-    assert False
 
 
 def test_parse_parameter_data_object_1():
@@ -78,4 +79,20 @@ def test_read_archive():
     pdu = application.ReadArchiveByTimeResponse.from_bytes(response.data)
     print(pdu)
     assert response
-    assert False
+
+
+def test_write_time():
+    time = datetime.datetime.now()
+    req = application.WriteTimeRequest(password="123456", device_time=time)
+    print(req)
+    print(req.to_bytes().hex(sep=" "))
+    frame = frames.Request(
+        service=req.service,
+        destination_address_2=0,
+        destination_address_1=0,
+        source_address_2=0,
+        source_address_1=0,
+        data=req.to_bytes(),
+    )
+    print(frame)
+    print(frame.to_bytes().hex(sep=" "))

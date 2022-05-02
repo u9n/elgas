@@ -4,7 +4,7 @@ import attr
 import marshmallow
 
 from elgas.parameters.enumerations import ParameterObjectType
-from elgas.utils import pop_many, pretty_text
+from elgas.utils import parse_ip_address, pop_many, pretty_text
 
 
 @attr.s(auto_attribs=True)
@@ -19,8 +19,8 @@ class Modem:
     call_to_dispatching: str
     modem_hang_up: str
     special_initialization: str
-    ip_address_for_registration_and_diagnostics: bytes  # TODO: should be string
-    ip_address_for_calling_to_dispatching: bytes
+    ip_address_for_registration_and_diagnostics: str
+    ip_address_for_calling_to_dispatching: str
     registration_send_period: int
     authentication_mode: int
     port_for_registration: int
@@ -28,7 +28,7 @@ class Modem:
     sms_call: str
     gprs_user_name: str
     gprs_password: str
-    ip_address_for_ping: bytes
+    ip_address_for_ping: str
     ping_period: int
     transition_into_command_mode: str
     pin: str
@@ -45,8 +45,10 @@ class Modem:
         call_to_dispatching = pretty_text(pop_many(data, 32))
         modem_hang_up = pretty_text(pop_many(data, 8))
         special_initialization = pretty_text(pop_many(data, 80))
-        ip_address_for_registration_and_diagnostics = pop_many(data, 4)
-        ip_address_for_calling_to_dispatching = pop_many(data, 4)
+        ip_address_for_registration_and_diagnostics = parse_ip_address(
+            pop_many(data, 4)
+        )
+        ip_address_for_calling_to_dispatching = parse_ip_address(pop_many(data, 4))
         registration_send_period = data.pop(0)
         authentication_mode = data.pop(0)
         port_for_registration = int.from_bytes(pop_many(data, 2), "little")
@@ -54,7 +56,7 @@ class Modem:
         sms_call = pretty_text(pop_many(data, 32))
         gprs_user_name = pretty_text(pop_many(data, 49))
         gprs_password = pop_many(data, 33).hex()
-        ip_address_for_ping = pop_many(data, 4)
+        ip_address_for_ping = parse_ip_address(pop_many(data, 4))
         ping_period = int.from_bytes(pop_many(data, 2), "little")
         transition_into_command_mode = pretty_text(pop_many(data, 8))
         pin = pop_many(data, 9).hex()

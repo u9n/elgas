@@ -95,5 +95,5 @@ class SetPointSchema(marshmallow.Schema):
     type_of_primary_quantity = marshmallow.fields.Integer(required=True)
     number_of_primary_quantity = marshmallow.fields.Integer(required=True)
     action_during_change = marshmallow.fields.Integer(required=True, allow_none=True)
-    text_log_0 = marshmallow.fields.Integer(required=True, allow_none=True)
-    text_log_1 = marshmallow.fields.Integer(required=True, allow_none=True)
+    text_log_0 = marshmallow.fields.String(required=True, allow_none=True)
+    text_log_1 = marshmallow.fields.String(required=True, allow_none=True)

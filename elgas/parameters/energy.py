@@ -117,7 +117,7 @@ class EnergySchema(marshmallow.Schema):
         return Energy(**data)
 
 
-class EnergyErrorSchema(EnergySchema):
+class ErrorEnergySchema(EnergySchema):
     @post_load
     def make_object(self, data, **kwargs):
         return ErrorEnergy(**data)
