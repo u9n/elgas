@@ -18,9 +18,7 @@ REQUIRES_PYTHON = "~=3.6"
 VERSION = "22.1.0.dev0"
 
 # What packages are required for this module to be executed?
-REQUIRED = [
-    "attrs>=21.4.0",
-]
+REQUIRED = ["attrs>=21.4.0", "cryptography==37.0.1"]
 
 TEST_PACKAGES = ["pytest"]
 DEV_PACKAGES = ["pre-commit"] + TEST_PACKAGES
