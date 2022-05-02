@@ -95,4 +95,4 @@ def test_write_time():
         data=req.to_bytes(),
     )
     print(frame)
-    print(frame.to_bytes().hex(sep=" "))
+    print(frame.to_bytes().hex())
