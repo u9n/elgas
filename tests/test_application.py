@@ -85,7 +85,7 @@ def test_write_time():
     time = datetime.datetime.now()
     req = application.WriteTimeRequest(password="123456", device_time=time)
     print(req)
-    print(req.to_bytes().hex(sep=" "))
+    print(req.to_bytes().hex())
     frame = frames.Request(
         service=req.service,
         destination_address_2=0,
