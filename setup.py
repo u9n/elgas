@@ -15,7 +15,7 @@ PROJECT_URLS = {
 EMAIL = "henrik.wahlgren@utilitarian.io"
 AUTHOR = "Henrik Palmlund Wahlgren @ Palmlund Wahlgren Innovative Technology AB"
 REQUIRES_PYTHON = "~=3.6"
-VERSION = "22.1.0.dev0"
+VERSION = "22.1.0"
 
 # What packages are required for this module to be executed?
 REQUIRED = ["attrs>=21.4.0", "cryptography==37.0.1", "marshmallow>=3.14.1"]
@@ -31,7 +31,6 @@ EXTRAS = {
 CLASSIFIERS = [
     "Intended Audience :: Developers",
     "Natural Language :: English",
-    "License :: BUSL-1.1",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.6",
@@ -107,7 +106,7 @@ setup(
     install_requires=REQUIRED,
     extras_require=EXTRAS,
     include_package_data=True,
-    license="BSD-3",
+    license="",
     zip_safe=False,
     keywords="AMR, Metering, smart meters, MDM, elgas, elcor, gas",
     classifiers=CLASSIFIERS,
