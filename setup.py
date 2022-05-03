@@ -14,11 +14,17 @@ PROJECT_URLS = {
 }
 EMAIL = "henrik.wahlgren@utilitarian.io"
 AUTHOR = "Henrik Palmlund Wahlgren @ Palmlund Wahlgren Innovative Technology AB"
-REQUIRES_PYTHON = "~=3.6"
-VERSION = "22.1.0"
+REQUIRES_PYTHON = "~=3.7"
+VERSION = "22.2.0"
 
 # What packages are required for this module to be executed?
-REQUIRED = ["attrs>=21.4.0", "cryptography==37.0.1", "marshmallow>=3.14.1"]
+REQUIRED = [
+    "attrs>=21.4.0",
+    "cryptography==37.0.1",
+    "marshmallow>=3.14.1",
+    "structlog>=21.5.0",
+    "pyserial==3.5",
+]
 
 TEST_PACKAGES = ["pytest"]
 DEV_PACKAGES = ["pre-commit"] + TEST_PACKAGES

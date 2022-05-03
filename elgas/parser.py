@@ -5,7 +5,6 @@ import attr
 import elgas.parameters
 import elgas.parameters.enumerations
 import elgas.parameters.factory
-from elgas import parameters
 from elgas.utils import pop_many
 
 

@@ -21,6 +21,16 @@ and this project adheres to [Calendar Versioning](https://calver.org/)
 
 ### Security
 
+## [22.2.0] - 2022-05-03
+
+### Added
+* Serial Transport
+
+### Fixed
+* padding of passwords
+* Raising exception on error response in encrypted response
+
+
 
 ## [22.1.0] - 2022-05-02
 
