@@ -50,7 +50,8 @@ class SecretByte(bytes):
 
 
 def to_secret_byte(data: bytes) -> SecretByte:
-    return SecretByte(data)
+    if data:
+        return SecretByte(data)
 
 
 def to_secret_str(data: str) -> SecretStr:
@@ -174,8 +175,9 @@ def pad_password(password: str):
     4 characters are insignificant.
     """
     possible_chars = "abcdefghijklmnopqrstuvxyzABCDEFGHIJKLMNOPQRSTUVXYZ0123456789"
-    four_random = random.choices(possible_chars, k=4)
-    return password + "".join(four_random)
+    two_random = random.choices(possible_chars, k=2)
+    # return password + "".join(four_random)
+    return password + "!\x04" + "".join(two_random)
 
 
 def bytes_to_datetime(data: bytes) -> Tuple[datetime, bool, bool]:

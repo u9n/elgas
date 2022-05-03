@@ -16,8 +16,10 @@ class ElgasClient:
     transport: transport.ElgasTransport
     password: str = attr.ib(converter=utils.to_secret_str)
     password_id: int
-    encryption_key: bytes = attr.ib(converter=utils.to_secret_byte)
-    encryption_key_id: int
+    encryption_key: Optional[bytes] = attr.ib(
+        converter=utils.to_secret_byte, default=None
+    )
+    encryption_key_id: Optional[int] = attr.ib(default=None)
     # device_configuration: List[object]
     elgas_connection: connection.ElgasConnection = attr.ib(
         default=attr.Factory(

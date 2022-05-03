@@ -45,6 +45,26 @@ def create_cipher_context(
         )
 
 
+def raise_error(data: bytes):
+    error = data[0]
+    if error == 0b00000001:
+        raise exceptions.WrongPasswordError()
+    elif error == 0b00000010:
+        raise exceptions.SettingArchiveFull()
+    elif error == 0b00000100:
+        raise exceptions.SwitchOff()
+    elif error == 0b00001000:
+        raise exceptions.BlockedBuffer()
+    elif error == 0b00010000:
+        raise exceptions.DataError()
+    elif error == 0b00100000:
+        raise exceptions.CipherKeyError()
+    elif error == 0b01000000:
+        raise exceptions.WrongEncryptionKeysError()
+    elif error == 0b10000000:
+        raise exceptions.WriteError()
+
+
 @attr.s(auto_attribs=True)
 class ElgasConnection:
     """
@@ -155,14 +175,14 @@ class ElgasConnection:
         try:
             response = frames.ResponseFactory.from_bytes(utils.return_characters(data))
 
-            if len(response.data) == 1:
-                self.raise_error(response.data)
-
             LOG.debug("Received ELGAS response", response=response)
 
             if isinstance(response, frames.EncryptedResponse):
                 response.data = self.cipher_context.decrypt(response.data)
                 LOG.debug("Decrypted ELGAS response", decrypted=response)
+
+            if len(response.data) == 1:
+                raise_error(response.data)
 
         except ValueError:
             LOG.debug("Cannot interpret data as frame. Need more data")
@@ -175,22 +195,3 @@ class ElgasConnection:
         self.buffer = bytearray()  # clear buffer
 
         return pdu
-
-    def raise_error(self, data: bytes):
-        error = data[0]
-        if error == 0b00000001:
-            raise exceptions.WrongPasswordError()
-        elif error == 0b00000010:
-            raise exceptions.SettingArchiveFull()
-        elif error == 0b00000100:
-            raise exceptions.SwitchOff()
-        elif error == 0b00001000:
-            raise exceptions.BlockedBuffer()
-        elif error == 0b00010000:
-            raise exceptions.DataError()
-        elif error == 0b00100000:
-            raise exceptions.CipherKeyError()
-        elif error == 0b01000000:
-            raise exceptions.WrongEncryptionKeysError()
-        elif error == 0b10000000:
-            raise exceptions.WriteError()
