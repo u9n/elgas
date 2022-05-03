@@ -3,6 +3,7 @@ import time
 from typing import *
 
 import attr
+import serial
 import structlog
 
 from elgas import exceptions
@@ -147,6 +148,109 @@ class BlockingTcpTransport:
         data = b""
         while len(data) < amount:
             data += self.tcp_socket.recv(amount - len(data))
+
+        return data
+
+    def recv_until(self, expected=b"\x0d", size=None):
+        """\
+        Read until an expected sequence is found ('\r' by default), the size
+        is exceeded or until timeout occurs.
+        """
+        lenterm = len(expected)
+        line = bytearray()
+        timeout = Timeout(self.timeout)
+        while True:
+            c = self._recv_bytes(1)
+            if c:
+                line += c
+                if line[-lenterm:] == expected:
+                    break
+                if size is not None and len(line) >= size:
+                    break
+            else:
+                break
+            if timeout.expired():
+                break
+        return bytes(line)
+
+
+@attr.s(auto_attribs=True)
+class SerialTransport:
+    """
+    A Serial transport
+    """
+
+    port: str
+    baud_rate: int
+    timeout: int = attr.ib(default=10)
+    serial_port: Optional[serial.Serial] = attr.ib(init=False, default=None)
+
+    def connect(self):
+        """
+        Create a new socket and set it on the transport
+        """
+        if self.serial_port:
+            raise RuntimeError(f"There is already an active serial port")
+
+        try:
+            self.serial_port = serial.Serial(
+                port=self.port,
+                baudrate=self.baud_rate,
+                timeout=self.timeout,
+            )
+        except (
+            OSError,
+            IOError,
+            serial.SerialException,
+        ) as e:
+            raise exceptions.CommunicationError("Unable to connect socket") from e
+        LOG.info(f"Connected to {self.port}")
+
+    def disconnect(self):
+        """
+        Close socket and remove it from the transport. No-op if the socket is already
+        closed.
+        """
+        if self.serial_port:
+            # only disconnect if there is a socket.
+            try:
+                self.serial_port.close()
+            except (OSError, IOError, serial.SerialException) as e:
+                self.serial_port = None
+                raise exceptions.CommunicationError from e
+            self.serial_port = None
+            LOG.info(f"Connection to {self.port} is closed")
+
+    def send(self, data: bytes):
+        """"""
+        if not self.serial_port:
+            raise RuntimeError("Serial transport not connected.")
+        try:
+            self.serial_port.write(data)
+            LOG.debug(f"Sent data", data=data, transport=self)
+        except (OSError, IOError, serial.SerialException) as e:
+            raise exceptions.CommunicationError("Could no send data") from e
+
+    def recv(self) -> bytes:
+        """"""
+        try:
+            data = self.recv_until()
+            LOG.debug("Received data", data=data, transport=self)
+        except (OSError, IOError, serial.SerialException) as e:
+            raise exceptions.CommunicationError("Could not receive data") from e
+        return data
+
+    def _recv_bytes(self, amount: int):
+        """
+        Some implementations will return partial data, and we need to keep on trying
+        to read the bytes until we have them all.
+        """
+        if not self.serial_port:
+            raise RuntimeError("TCP transport not connected.")
+
+        data = b""
+        while len(data) < amount:
+            data += self.serial_port.read(amount - len(data))
 
         return data
 
