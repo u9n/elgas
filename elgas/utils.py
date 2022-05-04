@@ -176,7 +176,7 @@ def pad_password(password: str):
     possible_chars = "abcdefghijklmnopqrstuvxyzABCDEFGHIJKLMNOPQRSTUVXYZ0123456789"
     two_random = random.choices(possible_chars, k=2)
     # return password + "".join(four_random)
-    return password + "!\x04" + "".join(two_random)
+    return password + "!\x03" + "".join(two_random)
 
 
 def bytes_to_datetime(data: bytes) -> Tuple[datetime, bool, bool]:
