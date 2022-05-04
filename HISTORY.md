@@ -21,6 +21,12 @@ and this project adheres to [Calendar Versioning](https://calver.org/)
 
 ### Security
 
+## [22.2.1] - 2022-05-04
+
+### Fixed
+
+* correct padding of password
+
 ## [22.2.0] - 2022-05-03
 
 ### Added
