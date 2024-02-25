@@ -30,3 +30,10 @@ class Archive(IntEnum):
     STATUS = 8
     BILLING = 9
     GAS_COMPOSITION = 10
+
+
+class Protocol(IntEnum):
+    ELGAS2 = 0
+    QMD = 1
+    RDS = 2
+    MODBUS = 3
