@@ -15,12 +15,12 @@ PROJECT_URLS = {
 EMAIL = "henrik.wahlgren@utilitarian.io"
 AUTHOR = "Henrik Palmlund Wahlgren @ Palmlund Wahlgren Innovative Technology AB"
 REQUIRES_PYTHON = "~=3.7"
-VERSION = "22.2.1"
+VERSION = "24.1.0b1"
 
 # What packages are required for this module to be executed?
 REQUIRED = [
     "attrs>=21.4.0",
-    "cryptography==37.0.1",
+    "cryptography==42.0.5",
     "marshmallow>=3.14.1",
     "structlog>=21.5.0",
     "pyserial==3.5",
@@ -44,6 +44,7 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
