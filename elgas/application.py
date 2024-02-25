@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timedelta
 from enum import IntEnum
 from typing import *
 
@@ -160,13 +160,12 @@ class WriteTimeResponse:
 
     @classmethod
     def from_bytes(cls, in_bytes: bytes):
-
         return cls()
 
 
 @attr.s(auto_attribs=True)
 class ReadDeviceParametersRequest:
-    """"""
+    """ """
 
     service: ClassVar[
         constants.ServiceNumber
@@ -187,7 +186,7 @@ class ReadDeviceParametersRequest:
 
 @attr.s(auto_attribs=True)
 class ReadDeviceParametersResponse:
-    """"""
+    """ """
 
     service: ClassVar[
         constants.ServiceNumber
@@ -214,7 +213,7 @@ class ReadDeviceParametersResponse:
 
 @attr.s(auto_attribs=True)
 class ReadArchiveByTimeRequest:
-    """"""
+    """ """
 
     service: ClassVar[
         constants.ServiceNumber
@@ -237,7 +236,7 @@ class ReadArchiveByTimeRequest:
 
 @attr.s(auto_attribs=True)
 class ReadArchiveByTimeResponse:
-    """"""
+    """ """
 
     service: ClassVar[
         constants.ServiceNumber
@@ -261,7 +260,7 @@ class ReadArchiveByTimeResponse:
 
 @attr.s(auto_attribs=True)
 class ReadArchiveRequest:
-    """"""
+    """ """
 
     service: ClassVar[constants.ServiceNumber] = constants.ServiceNumber.READ_ARCHIVES
 
@@ -282,7 +281,7 @@ class ReadArchiveRequest:
 
 @attr.s(auto_attribs=True)
 class ReadArchiveResponse:
-    """"""
+    """ """
 
     service: ClassVar[constants.ServiceNumber] = constants.ServiceNumber.READ_ARCHIVES
 
@@ -300,3 +299,117 @@ class ReadArchiveResponse:
             oldest_record_id=oldest_record_id,
             data=data,
         )
+
+
+@attr.s(auto_attribs=True)
+class CallRequest:
+    """
+    Used in call to dispatching. Device will send the Call message to tell the server it is awake.
+    It is also named GprsRegistration.
+    """
+
+    service: ClassVar[constants.ServiceNumber] = constants.ServiceNumber.CALL
+
+    guid: bytes
+    station_id: str
+    sim_card_id: str
+    modem_id: str
+    address_1: int
+    address_2: int
+    signal_strength: int
+    connections: int
+    last_connection_time: datetime
+    connection_errors: int
+    last_connection_error_time: datetime
+    resets: int
+    last_reset_time: datetime
+    tcp_data: int
+    all_data: int
+    serial_number: str
+    ip_address: str
+    last_modem_error: int
+    last_modem_error_time: datetime
+    modem_battery_capacity: int
+    modem_battery_voltage: int
+    firmware_version: str
+
+    version: int = attr.ib(default=2)
+    protocol: constants.Protocol = attr.ib(default=constants.Protocol.ELGAS2)
+
+    @classmethod
+    def from_bytes(cls, in_bytes: bytes):
+        """
+        Datetimes are number of seconds since "2000-01-01T00:00:00"
+        """
+        base_date = datetime.fromisoformat("2000-01-01T00:00:00")
+        data = bytearray(in_bytes)
+        length = int.from_bytes(utils.pop_many(data, 2), "little")
+        version = data.pop(0)
+        guid = bytes(utils.pop_many(data, 16))
+        station_id = utils.pretty_text(utils.pop_many(data, 17))
+        sim_id = str(utils.from_bcd(utils.pop_many(data, 10)))
+        modem_id = str(utils.from_bcd(utils.pop_many(data, 8)))
+        protocol = constants.Protocol(data.pop(0))
+        address_1 = int.from_bytes(utils.pop_many(data, 2), "little")
+        address_2 = data.pop(0)
+        signal_strength = data.pop(0)
+        connections = int.from_bytes(utils.pop_many(data, 4), "little")
+        last_connection = base_date + timedelta(
+            seconds=int.from_bytes(utils.pop_many(data, 4), "little")
+        )
+        connection_errors = int.from_bytes(utils.pop_many(data, 4), "little")
+        last_connection_error_time = base_date + timedelta(
+            seconds=int.from_bytes(utils.pop_many(data, 4), "little")
+        )
+        resets = int.from_bytes(utils.pop_many(data, 4), "little")
+        last_reset_time = base_date + timedelta(
+            seconds=int.from_bytes(utils.pop_many(data, 4), "little")
+        )
+        tcp_data = int.from_bytes(utils.pop_many(data, 4), "little")
+        all_data = int.from_bytes(utils.pop_many(data, 4), "little")
+        serial_number = str(int.from_bytes(utils.pop_many(data, 4), "little"))
+        ip_address = utils.parse_ip_address(utils.pop_many(data, 4))
+        last_modem_error_time = base_date + timedelta(
+            seconds=int.from_bytes(utils.pop_many(data, 4), "little")
+        )
+        last_modem_error = data.pop(0)
+        modem_battery_capacity = int.from_bytes(utils.pop_many(data, 2), "little")
+        modem_battery_voltage = int.from_bytes(utils.pop_many(data, 2), "little")
+        firmware_version = utils.pretty_text(utils.pop_many(data, 33))
+
+        return cls(
+            station_id=station_id,
+            sim_card_id=sim_id,
+            modem_id=modem_id,
+            address_1=address_1,
+            address_2=address_2,
+            signal_strength=signal_strength,
+            connections=connections,
+            last_connection_time=last_connection,
+            connection_errors=connection_errors,
+            last_connection_error_time=last_connection_error_time,
+            resets=resets,
+            last_reset_time=last_reset_time,
+            tcp_data=tcp_data,
+            all_data=all_data,
+            serial_number=serial_number,
+            ip_address=ip_address,
+            last_modem_error=last_modem_error,
+            last_modem_error_time=last_modem_error_time,
+            modem_battery_capacity=modem_battery_capacity,
+            modem_battery_voltage=modem_battery_voltage,
+            firmware_version=firmware_version,
+            version=version,
+            guid=guid,
+            protocol=protocol,
+        )
+
+
+@attr.s(auto_attribs=True)
+class CallResponse:
+    """
+    It is just an empty response
+    """
+
+    def to_bytes(self) -> bytes:
+        return b""
