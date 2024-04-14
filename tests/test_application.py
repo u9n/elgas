@@ -82,7 +82,8 @@ def test_read_archive():
 
 
 def test_write_time():
-    time = datetime.datetime.now()
+    time = datetime.datetime.fromisoformat("2024-04-14T13:34:36")
+    print(time)
     req = application.WriteTimeRequest(password="123456", device_time=time)
     print(req)
     print(req.to_bytes().hex())
@@ -96,3 +97,5 @@ def test_write_time():
     )
     print(frame)
     print(frame.to_bytes().hex())
+    # cant check as password is padded with random bytes.
+    #assert frame.to_bytes().hex() == "02fe84712000000000000000313233343536210359733634131404240405f5030d"

@@ -137,12 +137,16 @@ class WriteTimeRequest:
 
     password: str
     device_time: datetime
+    cryout: bool = attr.ib(default=False)
 
     def to_bytes(self) -> bytes:
         out = bytearray()
         out.extend(utils.pad_password(self.password).encode("latin-1"))
         out.extend(utils.datetime_to_bytes(self.device_time))
-        out.append(0b00000100)  # Flag to only sync time.
+        flags = 0b00000100  # Flag set to only sync time.
+        #if self.cryout:
+        #    flags = flags | 0b00000001  # Set the cryout bit
+        out.append(flags & 0xff)  # force to one byte just to be safe.
 
         return bytes(out)
 

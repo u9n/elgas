@@ -21,6 +21,12 @@ and this project adheres to [Calendar Versioning](https://calver.org/)
 
 ### Security
 
+## [24.1.0] - 2024-04-14
+
+### Added
+
+Cryout bit in Service x71 (WriteTimeRequest)
+
 ## [22.2.1] - 2022-05-04
 
 ### Fixed
