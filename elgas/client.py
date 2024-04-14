@@ -74,10 +74,10 @@ class ElgasClient:
         LOG.info("Got device time", time=response.time.isoformat())
         return response.time
 
-    def write_time(self, device_time: datetime):
+    def write_time(self, device_time: datetime, cryout: bool = False):
         LOG.info("Writing time to device", time=device_time.isoformat())
         request = application.WriteTimeRequest(
-            password=self.password, device_time=device_time
+            password=self.password, device_time=device_time, cryout=cryout
         )
         self.send(request)
         self.next_event()
