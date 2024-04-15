@@ -15,7 +15,7 @@ PROJECT_URLS = {
 EMAIL = "henrik.wahlgren@utilitarian.io"
 AUTHOR = "Henrik Palmlund Wahlgren @ Palmlund Wahlgren Innovative Technology AB"
 REQUIRES_PYTHON = "~=3.7"
-VERSION = "24.1.0b2"
+VERSION = "24.1.0"
 
 # What packages are required for this module to be executed?
 REQUIRED = [
